@@ -192,7 +192,7 @@ function markSent(kind) {
   render();
 }
 async function sendFile(kind) {
-  const ok = await saveFile(fileName(kind), exportText(), kind);
+  const ok = await saveFile(fileName(kind), exportText(kind), kind);
   if (!ok) return;
   markSent(kind);
   snack(kind === 'sync' ? 'Sync file ready. Open it on your other phone with Receive.' : 'Backup saved to your downloads');
@@ -428,6 +428,30 @@ async function onAction(act, el) {
       if (last) { last.focus(); last.select(); }
       return;
     }
+    case 'as-setup': return openSheet('autosync-setup');
+    case 'as-open': return openSheet('autosync');
+    case 'as-connect': {
+      const b = $('#as-connect');
+      const msg = $('#as-msg');
+      b.disabled = true;
+      b.textContent = 'Connecting…';
+      msg.textContent = '';
+      const r = await connectAutosync($('#as-token').value);
+      b.disabled = false;
+      b.textContent = 'Connect';
+      if (!r.ok) { msg.textContent = r.msg; buzz([6, 30, 6]); return; }
+      buzz([10, 40, 16]);
+      render();
+      openSheet('autosync');
+      return snack('Automatic sync is on');
+    }
+    case 'as-now': { const r = await autoSync(); return reportSync(r); }
+    case 'as-add-phone': return sendFile('sync');
+    case 'as-off': {
+      const yes = await ask({ title: 'Turn off automatic sync?', text: 'This phone stops syncing by itself. Your pantry stays here, and you can still sync by file.', ok: 'Turn off' });
+      if (yes) { meta.as = null; persist(); closeSheet(); render(); snack('Automatic sync is off on this phone'); }
+      return;
+    }
     case 'install': return promptInstall();
     case 'install-hide': meta.installHidden = true; persist(); return render();
     case 'dlg-ok': return closeDialog(true);
@@ -510,7 +534,14 @@ $('#file-in').addEventListener('change', async (ev) => {
   try { handleImport(await f.text()); } catch (e) { snack('Couldn’t read that file. Try again.'); }
 });
 
-document.addEventListener('visibilitychange', () => { if (!document.hidden) render(); });
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) return;
+  render();
+  backgroundUpdateCheck();
+  autoSync().then((r) => reportSync(r, true));
+});
+addEventListener('online', () => autoSync().then((r) => reportSync(r, true)));
+setInterval(() => { if (!document.hidden) autoSync().then((r) => reportSync(r, true)); }, 90000);
 setInterval(() => { if (!document.hidden) render(); }, 60000);
 
 /* ---------- install + theme ---------- */
@@ -542,13 +573,63 @@ function applyTheme() {
 }
 darkQuery.addEventListener('change', applyTheme);
 
-if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+/* ---------- updates: checked at launch, and again when the app comes back after a while ---------- */
+const swOK = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost');
+let swReg = Promise.resolve(null);
+let reloadingForUpdate = false;
+let lastUpdateCheck = 0;
+if (swOK) {
   let hadController = !!navigator.serviceWorker.controller;
-  navigator.serviceWorker.register('sw.js').catch((e) => console.warn('Offline support unavailable', e));
+  swReg = navigator.serviceWorker.register('sw.js').catch((e) => { console.warn('Offline support unavailable', e); return null; });
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (!hadController) { hadController = true; return; }
-    snack('My Pantry has been updated', 'Reload', () => location.reload());
+    if (reloadingForUpdate) return;
+    snack('A new version of My Pantry is ready', 'Update', () => location.reload());
   });
+}
+const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
+function bootMsg(text) {
+  $('#boot-msg').textContent = text || '';
+  $('#boot').classList.toggle('busy', !!text);
+}
+function session(key, value) {
+  try {
+    if (value === undefined) return sessionStorage.getItem(key);
+    if (value === null) sessionStorage.removeItem(key); else sessionStorage.setItem(key, value);
+  } catch (e) { /* storage blocked */ }
+  return null;
+}
+// Ask the server for a newer version. If there is one, wait for it to download, then restart into it.
+// Returns true when the page is about to reload. Gives up quietly when offline or slow.
+async function checkForAppUpdate() {
+  lastUpdateCheck = Date.now();
+  if (!swOK || !navigator.onLine || session('mp-updated')) return false;
+  const reg = await withTimeout(swReg, 3000).catch(() => null);
+  if (!reg) return false;
+  bootMsg('Checking for updates…');
+  try { await withTimeout(reg.update(), 5000); } catch (e) { return false; }
+  const worker = reg.installing || reg.waiting;
+  if (!worker) return false;
+  bootMsg('Downloading the new version…');
+  const ready = await new Promise((resolve) => {
+    const check = () => { if (worker.state === 'activated') resolve(true); else if (worker.state === 'redundant') resolve(false); };
+    worker.addEventListener('statechange', check);
+    check();
+    setTimeout(() => resolve(false), 20000);
+  });
+  if (!ready) return false;
+  bootMsg('Updated. Starting…');
+  session('mp-updated', '1');
+  reloadingForUpdate = true;
+  location.reload();
+  return true;
+}
+// When the app comes back to the front after 30+ minutes, look for an update in the background.
+async function backgroundUpdateCheck() {
+  if (!swOK || !navigator.onLine || Date.now() - lastUpdateCheck < 30 * 60000) return;
+  lastUpdateCheck = Date.now();
+  const reg = await swReg;
+  if (reg) reg.update().catch(() => {});
 }
 
 /* ---------- start ---------- */
@@ -568,6 +649,16 @@ async function boot() {
     meta = newMeta();
   }
   applyTheme();
+  if (await checkForAppUpdate()) return;   // restarting into the new version
+  bootMsg('');
+  const justUpdated = !!session('mp-updated');
+  session('mp-updated', null);
+  let launchSync = null;
+  if (asOn() && navigator.onLine) {
+    bootMsg('Syncing your pantry…');
+    launchSync = await withTimeout(autoSync(), 8000).catch(() => null);
+    bootMsg('');
+  }
   // Before 2.1 the currency was guessed from the phone's language, which picked USD or GBP for phones in
   // Pakistan set to English. Correct that once; after this, whatever is chosen in settings stays.
   let currencyFixed = false;
@@ -579,6 +670,8 @@ async function boot() {
   render();
   onScroll();
   if (currencyFixed) snack('Prices now show in Pakistani rupees (Rs)');
+  else if (launchSync && launchSync.added) reportSync(launchSync, true);
+  else if (justUpdated) snack(`Updated to My Pantry ${APP_VERSION}`);
   setTimeout(() => $('#boot').classList.add('gone'), 260);
   if (S.pantryId) {
     const tab = params.get('tab');

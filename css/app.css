@@ -403,3 +403,19 @@ textarea.code { font: 12px/1.45 ui-monospace, "SF Mono", Menlo, Consolas, monosp
 .item.swiping .swipe-under { visibility: visible; }
 /* The logo's own corners are rounded at about a quarter of its width: match them wherever it is shown. */
 .boot img, .w-hero img { border-radius: 26%; }
+
+/* ---------- launch checks: "Checking for updates…" under the logo ---------- */
+.boot { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; }
+.boot-msg { margin: 26px 0 0; min-height: 20px; font-size: 14px; font-weight: 650; color: var(--ink-2); opacity: 0; transform: translateY(6px); transition: opacity .25s, transform .3s var(--ease); }
+.boot-bar { width: 132px; height: 4px; margin-top: 12px; border-radius: 2px; background: var(--surface-3); overflow: hidden; opacity: 0; transition: opacity .25s; }
+.boot-bar i { display: block; width: 40%; height: 100%; border-radius: 2px; background: var(--brand); animation: bootBar 1.1s var(--ease) infinite; }
+.boot.busy .boot-msg { opacity: 1; transform: none; }
+.boot.busy .boot-bar { opacity: 1; }
+@keyframes bootBar { from { transform: translateX(-110%); } to { transform: translateX(260%); } }
+
+/* ---------- automatic sync ---------- */
+.as-card { display: flex; align-items: center; gap: 12px; width: 100%; padding: 16px; text-align: left; }
+.dock-inline { display: flex; margin-top: 10px; }
+.steps { margin: 0; padding-left: 22px; display: grid; gap: 7px; color: var(--ink-2); font-size: 14.5px; }
+.steps b { color: var(--ink); }
+a.btn { text-decoration: none; }

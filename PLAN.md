@@ -25,6 +25,14 @@ Your feedback on v1 was that it felt basic and too much like a website: plain lo
   - what you've spent restocking this month
 - **Code layout:** split into `css/` and `js/` files (see README).
 
+### Version 2.3 (2026-09-14): automatic updates and automatic sync
+- **Updates at launch:** the launch screen checks for a new version, downloads it and restarts into it before the app opens. It also checks in the background when you return to the app after 30 minutes.
+- **Automatic sync, using the GitHub mailbox option you chose.** This replaces the planned direct phone-to-phone connection (PeerJS). Direct connections only work while both apps are open at once, while a check at launch needs somewhere changes can wait:
+  - Changes go through a secret gist on your GitHub account. Each phone writes one file, its whole event log compressed and encrypted with AES-GCM using a key that never reaches GitHub. Each phone reads the others' files and merges them using the same rules as file sync (§4.4–4.5).
+  - Sync runs at launch, when the app comes back to the front, every 90 seconds while it's open, when the phone comes back online, and 2.5 seconds after a change.
+  - Setup needs a classic GitHub token limited to **gist**. The sync file carries the gist ID, the token and the key to the other phone. Backups don't carry them.
+  - Sync by file stays available as a fallback.
+
 ### Next: GitHub hosting (right after the first build)
 1. ✅ GitHub account created (2026-09-14), signed in on this computer as `vibe-shenron`.
 2. ✅ Public repository [vibe-shenron/my-pantry](https://github.com/vibe-shenron/my-pantry), published with GitHub Pages at https://vibe-shenron.github.io/my-pantry/.

@@ -5,7 +5,7 @@
    redrawing it, so numbers roll, bars glide and rows slide in and out.
    ===================================================================== */
 
-const APP_VERSION = '2.2';
+const APP_VERSION = '2.3';
 const ui = { tab: 'inventory', loc: 'all', filter: null, q: '', sheet: null, form: null, examples: true, joinName: '', scroll: {} };
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -363,6 +363,15 @@ function renderShop() {
 }
 
 /* ---------- sync + settings ---------- */
+function autosyncCard() {
+  const as = meta.as && meta.as.on ? meta.as : null;
+  if (!as) {
+    return `<div class="card as-card"><span class="lead brand">${icon('sync')}</span><span class="lt"><b>Keep your phones in step by themselves</b><small>Changes sync at launch and as you go, through a private, encrypted file on your GitHub.</small></span></div>
+      <div class="dock-inline"><button class="btn primary press" data-act="as-setup">${icon('sync')}Turn on automatic sync</button></div>`;
+  }
+  const state = as.err === 'auth' ? 'The GitHub key stopped working' : as.err === 'gone' ? 'The sync file is missing on GitHub' : as.last ? 'Last synced ' + ago(as.last) : 'Waiting for the first sync';
+  return `<button class="card as-card press" data-act="as-open"><span class="lead ${as.err ? 'bad' : 'brand'}">${icon('sync')}</span><span class="lt"><b>On${as.err ? ' · needs attention' : ''}</b><small>${esc(state)}</small></span>${CHEV()}</button>`;
+}
 function renderSync() {
   const me = S.devices[meta.deviceId];
   const others = otherDevices();
@@ -383,7 +392,10 @@ function renderSync() {
       <span class="role">${isMain() ? 'Main phone' : 'Member'}</span>
     </div>
 
-    <div class="sec-label"><span>Sync with another phone</span></div>
+    <div class="sec-label"><span>Automatic sync</span></div>
+    ${autosyncCard()}
+
+    <div class="sec-label"><span>Sync by file</span></div>
     <div class="action-tiles">
       <button class="atile press" data-act="send"><span class="lead brand">${icon('share')}</span><span><b>Send</b><small>${esc(others.length && pend ? `${pend} change${pend === 1 ? '' : 's'} to send` : meta.lastSentAt ? 'Sent ' + ago(meta.lastSentAt) : 'Share a sync file')}</small></span></button>
       <button class="atile press" data-act="receive"><span class="lead brand">${icon('download')}</span><span><b>Receive</b><small>${esc(meta.lastImport ? `From ${meta.lastImport.from}, ${ago(meta.lastImport.at)}` : 'Open a sync file')}</small></span></button>
@@ -418,7 +430,6 @@ function renderSync() {
 
     <div class="sec-label"><span>Coming soon</span></div>
     <div class="card">
-      <div class="list-row faded"><span class="lead">${icon('sync')}</span><span class="lt"><b>Automatic sync</b><small>Phones stay in step without sending files</small></span></div>
       <div class="list-row faded"><span class="lead">${icon('search')}</span><span class="lt"><b>Barcode scanning</b><small>Add and find items with the camera</small></span></div>
     </div>
 

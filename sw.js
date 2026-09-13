@@ -1,7 +1,7 @@
 // My Pantry service worker: opens instantly from the saved copy, works offline,
 // and refreshes the saved copy in the background.
 // Bump VERSION on every release: phones then install the new version and offer a reload.
-const VERSION = 'v4';
+const VERSION = 'v5';
 const CACHE = 'my-pantry-' + VERSION;
 const FILES = [
   './',
@@ -11,6 +11,7 @@ const FILES = [
   './js/core.js',
   './js/ui.js',
   './js/sheets.js',
+  './js/cloud.js',
   './js/app.js',
   './fonts/figtree.woff2',
   './fonts/bricolage.woff2',

@@ -4,8 +4,8 @@
    ===================================================================== */
 
 // Sheets with text fields are drawn once when opened, so a background refresh never wipes what's typed.
-const FORM_SHEETS = ['item', 'receive', 'copy', 'locs'];
-const TALL_SHEETS = ['item', 'activity', 'receive', 'copy'];
+const FORM_SHEETS = ['item', 'receive', 'copy', 'locs', 'autosync-setup'];
+const TALL_SHEETS = ['item', 'activity', 'receive', 'copy', 'autosync-setup'];
 
 function openSheet(kind, arg) {
   const wasOpen = !!ui.sheet;
@@ -40,7 +40,7 @@ function renderSheet(first) {
   if (!sh || (!first && FORM_SHEETS.includes(sh.kind))) return;
   const html = {
     detail: sheetDetail, item: sheetItem, locs: sheetLocs, activity: sheetActivity, deleted: sheetDeleted,
-    receive: sheetReceive, copy: sheetCopy, choose: sheetChoose,
+    receive: sheetReceive, copy: sheetCopy, choose: sheetChoose, 'autosync-setup': sheetAutosyncSetup, autosync: sheetAutosync,
   }[sh.kind](sh.arg);
   if (!ui.sheet) return;
   const body = $('#sheet-body');
@@ -258,6 +258,48 @@ function sheetCopy(arg) {
       <textarea class="input code" id="copy-out" readonly spellcheck="false">${esc(arg.text)}</textarea>
       <button class="btn primary press" data-act="copy-text">Copy text</button>
     </div>`;
+}
+
+/* ---------- automatic sync ---------- */
+function sheetAutosyncSetup() {
+  return sheetHead('Automatic sync') + `
+    <div class="stack">
+      <p class="hint">Your phones swap changes through a private file on your GitHub account. Everything is locked (encrypted) on the phone first, so GitHub only ever holds scrambled data. You set this up once, on this phone.</p>
+      <div class="panel">
+        <div class="panel-h">${icon('sparkle')}Step 1 · Make a key on GitHub</div>
+        <ol class="steps">
+          <li>Tap <b>Open GitHub</b> and sign in if asked.</li>
+          <li>Set <b>Expiration</b> to <b>No expiration</b>.</li>
+          <li>Leave only <b>gist</b> ticked, scroll down and tap <b>Generate token</b>.</li>
+          <li>Copy the key it shows. It starts with <b>ghp_</b>.</li>
+        </ol>
+        <a class="btn tonal press" href="${TOKEN_PAGE}" target="_blank" rel="noopener">${icon('share')}Open GitHub</a>
+      </div>
+      <div class="panel">
+        <div class="panel-h">${icon('sync')}Step 2 · Paste it here</div>
+        <input class="input" id="as-token" type="text" placeholder="ghp_…" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="GitHub key">
+        <button class="btn primary press" data-act="as-connect" id="as-connect">Connect</button>
+        <p class="hint" id="as-msg" role="alert"></p>
+      </div>
+      <p class="hint">This key can only create and change gists on your account. It can’t reach your code, repositories or anything else.</p>
+    </div>`;
+}
+function sheetAutosync() {
+  const as = meta.as || {};
+  const bad = as.err === 'auth' || as.err === 'gone';
+  const state = as.err === 'auth' ? 'The GitHub key stopped working. Turn sync off, then on again with a new key.'
+    : as.err === 'gone' ? 'The sync file is missing on GitHub. Turn sync off, then on again.'
+      : as.last ? `Last synced ${ago(as.last)}` : 'Waiting for the first sync';
+  return sheetHead('Automatic sync') + `
+    <div class="card profile"><span class="lead ${bad ? 'bad' : 'brand'}">${icon('sync')}</span><span class="lt"><b>${bad ? 'Needs attention' : 'On'}</b><small>${esc(state)}</small></span></div>
+    <div class="dock-inline"><button class="btn primary press" data-act="as-now">${icon('sync')}Sync now</button></div>
+    <div class="sec-label"><span>Your other phone</span></div>
+    <div class="card"><button class="list-row press" data-act="as-add-phone"><span class="lead brand">${icon('share')}</span>
+      <span class="lt"><b>${otherDevices().length ? 'Switch it on for your other phone' : 'Add your other phone'}</b><small>Send one sync file and open it there with Receive. No more files after that.</small></span>${CHEV()}</button></div>
+    <p class="foot">That file carries your sync key, so only send it to your own phone.</p>
+    <div class="sec-label"><span>When it syncs</span></div>
+    <div class="card"><div class="list-row"><span class="lt"><b>At launch, when you come back to the app, and a few seconds after each change</b><small>It needs internet. Changes made offline go up the next time you’re online.</small></span></div></div>
+    <div class="card" style="margin-top:14px"><button class="list-row danger press" data-act="as-off"><span class="lead bad">${icon('x')}</span><span class="lt"><b>Turn off on this phone</b><small>Your pantry stays on this phone.</small></span></button></div>`;
 }
 
 // arg: { title, act, current, options: [[value, label, sub]] }

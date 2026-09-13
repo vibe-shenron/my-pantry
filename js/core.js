@@ -339,7 +339,7 @@ function emit(type, d) {
   return e;
 }
 function persist() { return Store.put('data', { meta, log }); }
-function commit() { persist(); render(); }
+function commit() { persist(); render(); if (typeof queueAutoSync === 'function') queueAutoSync(); }
 
 function validEvent(e) {
   return !!e && typeof e === 'object' && typeof e.id === 'string' && typeof e.dev === 'string' && typeof e.type === 'string'
@@ -493,6 +493,12 @@ function monthSpend() {
 
 function syncStatus() {
   if (Store.mode === 'memory' || Store.failed) return ['bad', 'Not saving on this phone'];
+  if (meta.as && meta.as.on) {
+    if (meta.as.err === 'auth') return ['bad', 'Sync stopped: the GitHub key no longer works'];
+    if (meta.as.err === 'gone') return ['bad', 'Sync stopped: the sync file is missing'];
+    if (pendingCount()) return ['pending', navigator.onLine ? 'Syncing…' : 'Offline · will sync later'];
+    return ['', meta.as.last ? `Synced ${ago(meta.as.last)}` : 'Automatic sync is on'];
+  }
   if (otherDevices().length) {
     const p = pendingCount();
     if (p) return ['pending', `${p} change${p === 1 ? '' : 's'} not sent yet`];
@@ -567,11 +573,14 @@ async function askPersist() {
 }
 
 /* ---------- files: send, back up, receive ---------- */
-function exportText() {
-  return JSON.stringify({
+function exportText(kind) {
+  const data = {
     app: APP, format: FORMAT, pantryId: S.pantryId, pantryName: S.name,
     from: { dev: meta.deviceId, name: myName() }, exportedAt: Date.now(), events: log,
-  });
+  };
+  // A sync file (not a backup) carries the automatic-sync settings, so the other phone can switch it on.
+  if (kind === 'sync' && meta.as && meta.as.on) data.autosync = { gist: meta.as.gist, token: meta.as.token, key: meta.as.key };
+  return JSON.stringify(data);
 }
 const fileName = (kind) => `my-pantry-${kind}-${slug(myName())}-${dateStr(new Date())}.json`;
 
@@ -612,7 +621,9 @@ function importText(text, joinName) {
     emit('device.name', { name: joinName || 'Second Phone' });
   }
   meta.lastImport = { from: who, at: Date.now() };
+  const autoOn = !!data.autosync && !(meta.as && meta.as.on) && typeof adoptAutosync === 'function' && adoptAutosync(data.autosync);
   commit();
-  if (joining) { askPersist(); return { ok: true, msg: `Joined · ${items().length} items copied from ${who}` }; }
-  return { ok: true, msg: added ? `Got ${added} change${added === 1 ? '' : 's'} from ${who}` : `Already up to date with ${who}` };
+  const extra = autoOn ? ' · automatic sync is on' : '';
+  if (joining) { askPersist(); return { ok: true, msg: `Joined · ${items().length} items copied from ${who}${extra}` }; }
+  return { ok: true, msg: (added ? `Got ${added} change${added === 1 ? '' : 's'} from ${who}` : `Already up to date with ${who}`) + extra };
 }
