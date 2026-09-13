@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>My Pantry · Sample B · Clean List</title>
+<style>
+  :root {
+    --bg: #F2F2F7; --card: #FFFFFF; --ink: #1C1C1E; --muted: #6E6E73; --faint: #AEAEB2;
+    --line: rgba(60,60,67,.16); --fill: rgba(120,120,128,.12); --bar: rgba(249,249,251,.86);
+    --accent: #0A8F63; --accent-soft: rgba(10,143,99,.12); --low: #C26A00; --out: #D93036;
+    --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #000000; --card: #1C1C1E; --ink: #F2F2F7; --muted: #98989F; --faint: #636366;
+      --line: rgba(84,84,88,.55); --fill: rgba(118,118,128,.24); --bar: rgba(22,22,24,.86);
+      --accent: #30D158; --accent-soft: rgba(48,209,88,.16); --low: #FFB340; --out: #FF6961;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: var(--bg); color: var(--ink); font: 16px/1.35 var(--font); -webkit-tap-highlight-color: transparent; }
+  button, input, select { font: inherit; color: inherit; }
+  button { cursor: pointer; border: 0; background: none; padding: 0; text-align: inherit; }
+  [hidden] { display: none !important; }
+  .ic { width: 20px; height: 20px; flex: none; }
+
+  .app { max-width: 440px; margin: 0 auto; min-height: 100dvh; padding: 0 16px calc(100px + env(safe-area-inset-bottom)); }
+
+  /* top bar */
+  .topbar { position: sticky; top: 0; z-index: 5; display: flex; justify-content: space-between; align-items: center; margin: 0 -16px; padding: calc(10px + env(safe-area-inset-top)) 16px 10px; background: var(--bar); backdrop-filter: saturate(180%) blur(18px); -webkit-backdrop-filter: saturate(180%) blur(18px); }
+  .status { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
+  .status i { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+  .status.pending i { background: var(--low); }
+  .status.busy i { animation: blink .8s infinite alternate; }
+  @keyframes blink { to { opacity: .2; } }
+  .tb-btn { color: var(--accent); font-weight: 600; font-size: 17px; display: flex; align-items: center; gap: 2px; }
+  .tb-btn .ic { width: 26px; height: 26px; }
+  h1 { font-size: 34px; font-weight: 700; letter-spacing: .01em; margin: 2px 0 12px; }
+
+  /* search + segments */
+  .search { display: flex; align-items: center; gap: 6px; height: 38px; padding: 0 10px; border-radius: 11px; background: var(--fill); color: var(--muted); }
+  .search .ic { width: 18px; height: 18px; }
+  .search input { flex: 1; min-width: 0; border: 0; outline: 0; background: none; font-size: 17px; color: var(--ink); }
+  .seg { display: flex; gap: 2px; overflow-x: auto; margin: 12px 0 4px; padding: 2px; border-radius: 10px; background: var(--fill); scrollbar-width: none; }
+  .seg::-webkit-scrollbar { display: none; }
+  .seg button { flex: 1 0 auto; padding: 6px 12px; border-radius: 8px; font-size: 13.5px; font-weight: 600; white-space: nowrap; }
+  .seg button.on { background: var(--card); box-shadow: 0 1px 3px rgba(0,0,0,.14); }
+
+  .alert { display: flex; align-items: center; gap: 12px; width: 100%; margin-top: 14px; padding: 12px 14px; border-radius: 12px; background: var(--card); }
+  .alert .ic { color: var(--low); }
+  .alert b { font-weight: 600; }
+  .alert small { display: block; color: var(--muted); font-size: 13px; }
+  .alert .go { margin-left: auto; color: var(--accent); font-size: 15px; font-weight: 600; white-space: nowrap; }
+
+  /* grouped lists */
+  .group-h { display: flex; justify-content: space-between; margin: 24px 16px 7px; font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .02em; }
+  .group { background: var(--card); border-radius: 12px; overflow: hidden; }
+  .foot { margin: 8px 16px 0; font-size: 13px; color: var(--muted); }
+  .row { position: relative; display: flex; align-items: center; gap: 12px; width: 100%; min-height: 58px; padding: 8px 12px 8px 14px; cursor: pointer; }
+  .row + .row::before { content: ""; position: absolute; top: 0; right: 0; left: 62px; border-top: .5px solid var(--line); }
+  .row.plain + .row.plain::before, .row.plain + .row::before { left: 16px; }
+  .tile { width: 36px; height: 36px; border-radius: 9px; display: grid; place-items: center; background: var(--fill); font-size: 20px; flex: none; }
+  .grow { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .t { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .s { font-size: 13px; color: var(--muted); }
+  .s.low { color: var(--low); } .s.out { color: var(--out); }
+  .mini-step { display: flex; align-items: center; gap: 2px; flex: none; }
+  .mini-step button { width: 30px; height: 30px; border-radius: 50%; background: var(--fill); display: grid; place-items: center; color: var(--accent); }
+  .mini-step button:active { transform: scale(.9); }
+  .mini-step .ic { width: 16px; height: 16px; stroke-width: 2.6; }
+  .mini-step b { min-width: 68px; text-align: center; font-weight: 600; font-size: 14px; font-variant-numeric: tabular-nums; }
+  .val { color: var(--muted); margin-left: auto; white-space: nowrap; }
+  .chev { color: var(--faint); width: 16px; height: 16px; }
+  .accent-t { color: var(--accent); }
+  .danger-t { color: var(--out); }
+  .empty { padding: 28px 16px; text-align: center; color: var(--muted); }
+
+  /* shopping */
+  .circle { width: 24px; height: 24px; border-radius: 50%; border: 1.8px solid var(--faint); display: grid; place-items: center; flex: none; color: #fff; transition: .15s; }
+  .done .circle { background: var(--accent); border-color: var(--accent); }
+  .done .t { color: var(--muted); text-decoration: line-through; }
+  .circle .ic { width: 14px; height: 14px; stroke-width: 3.2; }
+  .row input.inline { flex: 1; min-width: 0; border: 0; outline: 0; background: none; font-size: 16px; color: var(--ink); }
+  .toolbar { position: sticky; bottom: calc(66px + env(safe-area-inset-bottom)); margin: 20px 0 0; }
+  .pbtn { width: 100%; height: 50px; border-radius: 14px; background: var(--accent); color: #fff; font-weight: 600; font-size: 17px; text-align: center; }
+  .pbtn:disabled { background: var(--fill); color: var(--muted); cursor: default; }
+
+  /* switch */
+  .switch { width: 51px; height: 31px; border-radius: 16px; background: var(--fill); position: relative; flex: none; transition: .2s; }
+  .switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,.2); transition: .2s; }
+  .switch.on { background: var(--accent); }
+  .switch.on::after { left: 22px; }
+
+  /* tabs */
+  .tabs { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 440px; display: grid; grid-template-columns: repeat(3, 1fr); background: var(--bar); backdrop-filter: saturate(180%) blur(18px); -webkit-backdrop-filter: saturate(180%) blur(18px); border-top: .5px solid var(--line); padding: 6px 0 calc(4px + env(safe-area-inset-bottom)); z-index: 10; }
+  .tabs button { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 10.5px; font-weight: 500; color: var(--faint); }
+  .tabs .ic { width: 26px; height: 26px; }
+  .tabs button.active { color: var(--accent); }
+  .badge { position: absolute; top: -2px; left: calc(50% + 8px); min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--out); color: #fff; font-size: 11px; font-weight: 600; line-height: 18px; text-align: center; }
+
+  /* sheets */
+  .scrim { position: fixed; inset: 0; background: rgba(0,0,0,.4); opacity: 0; pointer-events: none; transition: opacity .25s; z-index: 20; }
+  .scrim.open { opacity: 1; pointer-events: auto; }
+  .sheet { position: fixed; left: 50%; bottom: 0; width: 100%; max-width: 440px; height: 92dvh; overflow-y: auto; transform: translate(-50%, 102%); transition: transform .34s cubic-bezier(.2,.8,.2,1); background: var(--bg); border-radius: 12px 12px 0 0; padding: 0 16px calc(24px + env(safe-area-inset-bottom)); z-index: 21; }
+  .sheet.open { transform: translate(-50%, 0); }
+  .sheet-bar { position: sticky; top: 0; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; margin: 0 -16px; padding: 14px 16px; background: var(--bg); z-index: 1; }
+  .sheet-bar b { font-weight: 600; font-size: 17px; }
+  .sheet-bar button { color: var(--accent); font-size: 17px; }
+  .sheet-bar button:last-child { justify-self: end; font-weight: 600; }
+  .ident { text-align: center; margin: 8px 0 4px; }
+  .ident .big { width: 76px; height: 76px; margin: 0 auto 8px; border-radius: 20px; background: var(--card); display: grid; place-items: center; font-size: 42px; }
+  .ident h2 { font-size: 24px; margin: 0; }
+  .ident p { margin: 2px 0 0; color: var(--muted); }
+  .qty-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; }
+  .qty-row .mini-step button { width: 40px; height: 40px; }
+  .qty-row .mini-step b { font-size: 20px; min-width: 90px; }
+  .form-row { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 14px; position: relative; }
+  .form-row + .form-row::before { content: ""; position: absolute; top: 0; right: 0; left: 14px; border-top: .5px solid var(--line); }
+  .form-row label { flex: none; width: 110px; }
+  .form-row input, .form-row select { flex: 1; min-width: 0; border: 0; outline: 0; background: none; font-size: 16px; color: var(--ink); text-align: right; height: 46px; }
+  .form-row select { direction: rtl; }
+  .emojis { display: flex; gap: 6px; overflow-x: auto; padding: 10px 12px; scrollbar-width: none; }
+  .emojis button { flex: none; width: 42px; height: 42px; border-radius: 10px; font-size: 22px; text-align: center; }
+  .emojis button.on { background: var(--accent-soft); box-shadow: inset 0 0 0 2px var(--accent); }
+  .qr { width: 220px; margin: 14px auto 10px; padding: 14px; border-radius: 16px; background: #fff; color: #000; }
+  .code { text-align: center; font-size: 28px; font-weight: 600; letter-spacing: .14em; margin: 4px 0 2px; }
+
+  .toast { position: fixed; left: 50%; top: calc(14px + env(safe-area-inset-top)); transform: translate(-50%, -20px); background: var(--card); color: var(--ink); padding: 10px 16px; border-radius: 22px; box-shadow: 0 8px 30px rgba(0,0,0,.18); font-size: 14px; font-weight: 600; opacity: 0; transition: .25s; z-index: 30; pointer-events: none; white-space: nowrap; }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+</style>
+</head>
+<body>
+<div class="app">
+  <section class="screen" id="inventory">
+    <div class="topbar"><span class="status-slot"></span><button class="tb-btn" data-add aria-label="Add item"><i data-icon="plus"></i></button></div>
+    <h1>My Pantry</h1>
+    <label class="search"><i data-icon="search"></i><input id="q" type="search" placeholder="Search" autocomplete="off"></label>
+    <div class="seg" id="seg"></div>
+    <div id="inv-list"></div>
+  </section>
+
+  <section class="screen" id="shopping" hidden>
+    <div class="topbar"><span class="status-slot"></span><span></span></div>
+    <h1>Shopping</h1>
+    <div id="shop-list"></div>
+    <div class="toolbar"><button class="pbtn" id="restock"></button></div>
+  </section>
+
+  <section class="screen" id="sync" hidden>
+    <div class="topbar"><span class="status-slot"></span><span></span></div>
+    <h1>Sync</h1>
+    <div id="sync-body"></div>
+  </section>
+</div>
+
+<nav class="tabs">
+  <button data-go="inventory" class="active"><i data-icon="list"></i>Inventory</button>
+  <button data-go="shopping"><i data-icon="cart"></i>Shopping<b class="badge" id="shop-badge"></b></button>
+  <button data-go="sync"><i data-icon="sync"></i>Sync</button>
+</nav>
+
+<div class="scrim" id="scrim"></div>
+
+<div class="sheet" data-sheet="detail">
+  <div class="sheet-bar"><span></span><b>Item</b><button data-close>Done</button></div>
+  <div id="detail"></div>
+</div>
+
+<div class="sheet" data-sheet="add">
+  <form id="add-form">
+    <div class="sheet-bar"><button type="button" data-close style="justify-self:start;font-weight:400">Cancel</button><b>New Item</b><button>Add</button></div>
+    <div class="group-h">Item</div>
+    <div class="group">
+      <div class="form-row"><label for="f-name">Name</label><input id="f-name" name="name" placeholder="Required" required autocomplete="off"></div>
+      <div class="emojis" id="emojis"></div>
+    </div>
+    <div class="group-h">Stock</div>
+    <div class="group">
+      <div class="form-row"><label for="f-loc">Location</label><select id="f-loc" name="location"></select></div>
+      <div class="form-row"><label for="f-qty">Quantity</label><input id="f-qty" name="qty" type="number" min="0" step="any" value="1" inputmode="decimal"></div>
+      <div class="form-row"><label for="f-unit">Unit</label><select id="f-unit" name="unit"></select></div>
+      <div class="form-row"><label for="f-min">Warn below</label><input id="f-min" name="min" type="number" min="0" step="any" value="1" inputmode="decimal"></div>
+      <div class="form-row"><label for="f-exp">Expires</label><input id="f-exp" name="expiry" type="date"></div>
+    </div>
+    <p class="foot">When the quantity drops below the warning level, it goes on the shopping list.</p>
+  </form>
+</div>
+
+<div class="sheet" data-sheet="pair">
+  <div class="sheet-bar"><span></span><b>Pair a Phone</b><button data-close>Done</button></div>
+  <div class="group" style="padding:18px 16px;text-align:center">
+    <div class="qr" id="qr"></div>
+    <div class="code" id="code"></div>
+    <p class="s">Open My Pantry on the other phone → <b>Join a pantry</b> → scan or type the code.</p>
+  </div>
+  <p class="foot">The new phone downloads a full copy, then catches up every time both apps are open. The code expires in 10 minutes.</p>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="shared/pantry-core.js"></script>
+<script>
+  const P = window.Pantry;
+  const $ = (s) => document.querySelector(s);
+  const state = { tab: 'inventory', loc: 'all', attention: false, q: '', open: null, emoji: P.emojis[0], backup: true };
+
+  function statusLine() {
+    const s = P.sync;
+    const cls = s.syncing ? 'busy pending' : s.pending ? 'pending' : '';
+    const text = s.syncing ? 'Syncing with Second Phone…' : s.pending ? `${s.pending} changes not synced yet` : `Synced ${s.lastSync}`;
+    return `<button class="status ${cls}" data-go="sync"><i></i>${text}</button>`;
+  }
+
+  function subline(i) {
+    const st = P.status(i);
+    if (st === 'out') return ['out', 'Out of stock'];
+    if (P.expiring(i)) return [P.daysLeft(i) <= 1 ? 'out' : 'low', P.expiryLabel(i)];
+    if (st === 'low') return ['low', `Low · warn below ${P.fmtQty(i, i.min)}`];
+    return ['', P.esc(i.category)];
+  }
+
+  function itemRow(i) {
+    const [cls, text] = subline(i);
+    return `
+      <div class="row" data-open="${i.id}">
+        <span class="tile">${i.emoji}</span>
+        <span class="grow"><span class="t">${P.esc(i.name)}</span><span class="s ${cls}">${text}</span></span>
+        <span class="mini-step">
+          <button data-adj="-1" data-id="${i.id}" aria-label="Use one">${P.icon('minus')}</button>
+          <b>${P.fmtQty(i)}</b>
+          <button data-adj="1" data-id="${i.id}" aria-label="Add one">${P.icon('plus')}</button>
+        </span>
+      </div>`;
+  }
+
+  function renderInventory() {
+    const segBtn = (id, label) => `<button data-loc="${id}" class="${state.loc === id ? 'on' : ''}">${label}</button>`;
+    $('#seg').innerHTML = segBtn('all', 'All') + P.locations.map((l) => segBtn(l.id, l.name)).join('');
+
+    const q = state.q.trim().toLowerCase();
+    const needs = (i) => P.status(i) !== 'ok' || P.expiring(i);
+    const list = P.items.filter((i) =>
+      (state.loc === 'all' || i.location === state.loc) &&
+      (!q || i.name.toLowerCase().includes(q) || i.category.toLowerCase().includes(q)) &&
+      (!state.attention || needs(i)));
+
+    const s = P.stats();
+    let html = '';
+    if (!q) {
+      html += state.attention
+        ? `<button class="alert" data-attention><span class="grow"><b>Showing ${list.length} that need attention</b></span><span class="go">Show all</span></button>`
+        : s.attention ? `<button class="alert" data-attention>${P.icon('alert')}<span class="grow"><b>${s.attention} need attention</b><small>${s.low + s.out} low or out · ${s.expiring} expiring soon</small></span><span class="go">Show</span></button>` : '';
+    }
+    const groups = P.locations.map((l) => ({ l, rows: list.filter((i) => i.location === l.id) })).filter((g) => g.rows.length);
+    html += groups.map(({ l, rows }) => `
+      <div class="group-h"><span>${l.name}</span><span>${rows.length}</span></div>
+      <div class="group">${rows.map(itemRow).join('')}</div>`).join('');
+    if (!groups.length) html += '<div class="group-h"></div><div class="group"><p class="empty">No items found</p></div>';
+    $('#inv-list').innerHTML = html;
+  }
+
+  function shopRow(e) {
+    return `
+      <div class="row ${e.checked ? 'done' : ''}" data-toggle="${e.key}">
+        <span class="circle">${e.checked ? P.icon('check') : ''}</span>
+        <span class="grow"><span class="t">${e.emoji} ${P.esc(e.name)}</span><span class="s">${P.esc(e.note || 'Added by you')}</span></span>
+      </div>`;
+  }
+
+  function renderShop() {
+    const { auto, extras } = P.shoppingList();
+    const n = P.checkedCount();
+    $('#shop-list').innerHTML = `
+      <div class="group-h"><span>Running low</span><span>${auto.length}</span></div>
+      <div class="group">${auto.map(shopRow).join('') || '<p class="empty">Nothing is running low</p>'}</div>
+      <p class="foot">Added automatically when stock drops below its warning level.</p>
+      <div class="group-h"><span>Extras</span><span>${extras.length}</span></div>
+      <div class="group">
+        ${extras.map(shopRow).join('')}
+        <form class="row" id="extra-form" style="cursor:default">
+          <span class="circle" style="border-style:dashed"></span>
+          <input class="inline" id="extra" placeholder="New item" autocomplete="off" enterkeyhint="done">
+        </form>
+      </div>`;
+    const btn = $('#restock');
+    btn.disabled = !n;
+    btn.textContent = n ? `Restock ${n} Item${n === 1 ? '' : 's'}` : 'Tick items as you shop';
+    const total = auto.length + extras.length;
+    $('#shop-badge').textContent = total;
+    $('#shop-badge').hidden = !total;
+  }
+
+  function renderSync() {
+    const s = P.sync;
+    const second = P.devices[1];
+    const statusText = s.syncing ? 'Syncing…' : s.pending ? `${s.pending} waiting` : 'Up to date';
+    $('#sync-body').innerHTML = `
+      <div class="group-h">This phone</div>
+      <div class="group">
+        <div class="row plain"><span class="grow">Role</span><span class="val">Main (master copy)</span></div>
+        <div class="row plain"><span class="grow">Status</span><span class="val">${statusText}</span></div>
+        <div class="row plain"><span class="grow">Last sync</span><span class="val">${s.lastSync}</span></div>
+        <button class="row plain" data-sync ${s.syncing ? 'disabled' : ''}><span class="grow accent-t">${s.syncing ? 'Syncing…' : 'Sync Now'}</span></button>
+      </div>
+      <p class="foot">Other phones send their changes here and catch up on yours whenever both apps are open.</p>
+
+      <div class="group-h">Paired phones</div>
+      <div class="group">
+        <div class="row"><span class="tile">📱</span><span class="grow"><span class="t">${second.name}</span><span class="s">Last seen ${second.lastSeen}</span></span>${P.icon('chevron', 'chev')}</div>
+        <button class="row" data-pair><span class="tile accent-t">${P.icon('plus')}</span><span class="grow accent-t">Pair a New Phone…</span></button>
+      </div>
+
+      <div class="group-h">Backup</div>
+      <div class="group">
+        <div class="row plain" data-backup><span class="grow">Weekly backup reminder</span><span class="switch ${state.backup ? 'on' : ''}"></span></div>
+        <button class="row plain" data-toast="Backup file saved (sample)"><span class="grow accent-t">Export Backup File</span></button>
+        <button class="row plain" data-toast="Opens a file picker (sample)"><span class="grow accent-t">Restore From Backup…</span></button>
+      </div>
+
+      <div class="group-h"></div>
+      <div class="group">
+        <button class="row plain" data-toast="Only shown on a second phone"><span class="grow danger-t">Make Another Phone the Main…</span></button>
+      </div>
+      <p class="foot">Your pantry is stored only on your phones. Nothing is uploaded.</p>`;
+  }
+
+  function renderDetail() {
+    const i = P.byId(state.open);
+    const l = P.loc(i.location);
+    const [cls, text] = subline(i);
+    $('#detail').innerHTML = `
+      <div class="ident"><div class="big">${i.emoji}</div><h2>${P.esc(i.name)}</h2><p class="s ${cls}">${text}</p></div>
+      <div class="group-h">Quantity</div>
+      <div class="group"><div class="qty-row">
+        <span class="s">${P.status(i) === 'ok' ? 'In stock' : 'Needs buying'}</span>
+        <span class="mini-step">
+          <button data-adj="-1" data-id="${i.id}" aria-label="Use one">${P.icon('minus')}</button>
+          <b>${P.fmtQty(i)}</b>
+          <button data-adj="1" data-id="${i.id}" aria-label="Add one">${P.icon('plus')}</button>
+        </span>
+      </div></div>
+      <div class="group-h">Details</div>
+      <div class="group">
+        <div class="row plain"><span class="grow">Location</span><span class="val">${l.icon} ${l.name}</span></div>
+        <div class="row plain"><span class="grow">Category</span><span class="val">${P.esc(i.category)}</span></div>
+        <div class="row plain"><span class="grow">Warn below</span><span class="val">${P.fmtQty(i, i.min)}</span></div>
+        <div class="row plain"><span class="grow">Expires</span><span class="val">${i.expiry ? i.expiry.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : 'None'}</span></div>
+      </div>
+      <div class="group-h">History</div>
+      <div class="group">
+        <div class="row plain"><span class="grow">Last changed</span><span class="val">${i.changedBy}, ${i.changedAgo}</span></div>
+      </div>
+      <div class="group-h"></div>
+      <div class="group">
+        <button class="row plain" data-toast="Editing comes with the real app"><span class="grow accent-t">Edit Item</span></button>
+        <button class="row plain" data-toast="Would move to Recently Deleted"><span class="grow danger-t">Delete Item</span></button>
+      </div>`;
+  }
+
+  function render() {
+    renderInventory();
+    renderShop();
+    renderSync();
+    if (state.open) renderDetail();
+    document.querySelectorAll('.status-slot').forEach((el) => (el.innerHTML = statusLine()));
+  }
+
+  function go(tab) {
+    state.tab = tab;
+    document.querySelectorAll('.screen').forEach((s) => (s.hidden = s.id !== tab));
+    document.querySelectorAll('.tabs button').forEach((b) => b.classList.toggle('active', b.dataset.go === tab));
+    closeSheets();
+    scrollTo(0, 0);
+    render();
+  }
+
+  function openSheet(name) {
+    document.querySelectorAll('.sheet').forEach((s) => s.classList.toggle('open', s.dataset.sheet === name));
+    $('#scrim').classList.add('open');
+  }
+  function closeSheets() {
+    document.querySelectorAll('.sheet').forEach((s) => s.classList.remove('open'));
+    $('#scrim').classList.remove('open');
+    state.open = null;
+  }
+
+  let toastTimer;
+  function toast(msg) {
+    const t = $('#toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2000);
+  }
+
+  function paintEmojis() {
+    $('#emojis').innerHTML = P.emojis.map((e) => `<button type="button" data-emoji="${e}" class="${e === state.emoji ? 'on' : ''}">${e}</button>`).join('');
+  }
+
+  document.addEventListener('click', (e) => {
+    const at = (sel) => e.target.closest(sel);
+    let x;
+    if ((x = at('[data-adj]'))) return P.adjust(+x.dataset.id, +x.dataset.adj);
+    if ((x = at('[data-go]'))) return go(x.dataset.go);
+    if ((x = at('[data-open]'))) { state.open = +x.dataset.open; renderDetail(); return openSheet('detail'); }
+    if ((x = at('[data-loc]'))) { state.loc = x.dataset.loc; return renderInventory(); }
+    if (at('[data-attention]')) { state.attention = !state.attention; return renderInventory(); }
+    if ((x = at('[data-toggle]'))) return P.toggleShop(x.dataset.toggle);
+    if ((x = at('[data-emoji]'))) { state.emoji = x.dataset.emoji; return paintEmojis(); }
+    if (at('[data-backup]')) { state.backup = !state.backup; return renderSync(); }
+    if (at('[data-sync]')) return P.syncNow();
+    if (at('[data-pair]')) return openSheet('pair');
+    if (at('[data-add]')) return openSheet('add');
+    if (at('[data-close]') || e.target.id === 'scrim') return closeSheets();
+    if (at('#restock')) { const n = P.restock(); return toast(`${n} item${n === 1 ? '' : 's'} restocked`); }
+    if ((x = at('[data-toast]'))) return toast(x.dataset.toast);
+  });
+
+  $('#q').addEventListener('input', (e) => { state.q = e.target.value; renderInventory(); });
+
+  // The extras form is re-rendered, so listen at the document level.
+  document.addEventListener('submit', (e) => {
+    if (e.target.id !== 'extra-form') return;
+    e.preventDefault();
+    const v = $('#extra').value.trim();
+    if (!v) return;
+    P.addExtra(v);
+    $('#extra').focus();
+  });
+
+  $('#add-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const f = new FormData(e.target);
+    const exp = f.get('expiry');
+    const item = P.addItem({
+      name: f.get('name').trim(), emoji: state.emoji, location: f.get('location'),
+      qty: f.get('qty'), unit: f.get('unit'), min: f.get('min'),
+      expiry: exp ? new Date(exp + 'T00:00') : null,
+    });
+    e.target.reset();
+    state.attention = false;
+    state.loc = item.location;
+    go('inventory');
+    toast(`Added ${item.name}`);
+  });
+
+  $('#f-loc').innerHTML = P.locations.map((l) => `<option value="${l.id}">${l.name}</option>`).join('');
+  $('#f-unit').innerHTML = P.units.map((u) => `<option>${u}</option>`).join('');
+  $('#qr').innerHTML = P.fakeQR();
+  $('#code').textContent = P.pairCode;
+  paintEmojis();
+  P.on(render);
+  render();
+</script>
+</body>
+</html>

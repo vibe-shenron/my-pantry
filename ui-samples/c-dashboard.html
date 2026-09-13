@@ -1,0 +1,524 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0D0F12">
+<meta name="color-scheme" content="dark">
+<title>My Pantry · Sample C · Dashboard</title>
+<style>
+  :root {
+    --bg: #0D0F12; --panel: #16191E; --panel2: #1E2229; --ink: #EEF1F4; --muted: #8A93A0; --line: #262B33;
+    --accent: #C5F54A; --accent-ink: #151B06; --ok: #4ADE80; --low: #FFB547; --out: #FF6B6B; --info: #7CC4FF;
+    --font: "Inter", "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: #07080A; color: var(--ink); font: 15px/1.4 var(--font); -webkit-tap-highlight-color: transparent; font-variant-numeric: tabular-nums; }
+  button, input, select { font: inherit; color: inherit; }
+  button { cursor: pointer; border: 0; background: none; padding: 0; text-align: inherit; }
+  [hidden] { display: none !important; }
+  .ic { width: 20px; height: 20px; flex: none; }
+
+  .app { max-width: 440px; margin: 0 auto; min-height: 100dvh; background: var(--bg); padding: 0 16px calc(104px + env(safe-area-inset-bottom)); }
+
+  .bar-top { display: flex; justify-content: space-between; align-items: center; padding: calc(16px + env(safe-area-inset-top)) 0 14px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: .1em; font-size: 13px; text-transform: uppercase; }
+  .logo { width: 30px; height: 30px; border-radius: 9px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; }
+  .logo .ic { width: 18px; height: 18px; stroke-width: 2.4; }
+  .h { font-size: 28px; font-weight: 800; letter-spacing: -.02em; margin: 0; }
+  .sync-chip { display: inline-flex; align-items: center; gap: 7px; padding: 7px 11px; border-radius: 10px; background: var(--panel); border: 1px solid var(--line); font-size: 12px; font-weight: 700; color: var(--muted); }
+  .sync-chip i { width: 7px; height: 7px; border-radius: 2px; background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+  .sync-chip.pending i { background: var(--low); box-shadow: 0 0 8px var(--low); }
+  .sync-chip.busy i { background: var(--accent); animation: blink .7s infinite alternate; }
+  @keyframes blink { to { opacity: .2; } }
+
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; }
+  .label { font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .09em; }
+  .sec { display: flex; justify-content: space-between; align-items: center; margin: 26px 2px 10px; }
+  .sec .more { font-size: 12.5px; font-weight: 700; color: var(--accent); }
+
+  /* overview */
+  .hero { padding: 18px; }
+  .hero-num { display: flex; align-items: baseline; gap: 10px; margin: 6px 0 14px; }
+  .hero-num b { font-size: 64px; font-weight: 800; line-height: .9; letter-spacing: -.04em; }
+  .hero-num span { color: var(--muted); font-weight: 600; }
+  .stack { display: flex; height: 10px; border-radius: 5px; overflow: hidden; gap: 2px; background: var(--panel2); }
+  .stack i { display: block; height: 100%; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 10px; font-size: 12.5px; color: var(--muted); }
+  .legend span::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; background: var(--c); }
+  .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+  .tile { padding: 14px; display: flex; flex-direction: column; gap: 10px; min-height: 96px; }
+  .tile b { font-size: 30px; font-weight: 800; line-height: 1; letter-spacing: -.02em; }
+  .tile .ic { color: var(--muted); }
+  .tile-top { display: flex; justify-content: space-between; align-items: center; }
+  .locs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .loc { padding: 12px 14px; display: flex; align-items: center; gap: 12px; }
+  .loc .e { font-size: 24px; }
+  .loc b { display: block; font-weight: 700; }
+  .loc small { color: var(--muted); font-size: 12px; }
+  .loc small em { font-style: normal; color: var(--low); font-weight: 700; }
+  .timeline .r { display: flex; align-items: center; gap: 12px; padding: 12px 14px; width: 100%; }
+  .timeline .r + .r { border-top: 1px solid var(--line); }
+  .days { width: 52px; flex: none; text-align: center; padding: 6px 0; border-radius: 10px; font-weight: 800; font-size: 13px; }
+  .days.hot { background: rgba(255,107,107,.14); color: var(--out); }
+  .days.warm { background: rgba(255,181,71,.14); color: var(--low); }
+  .grow { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .grow small { color: var(--muted); font-size: 12.5px; }
+
+  /* items */
+  .search { display: flex; align-items: center; gap: 8px; height: 46px; padding: 0 14px; border-radius: 14px; background: var(--panel); border: 1px solid var(--line); color: var(--muted); }
+  .search input { flex: 1; min-width: 0; border: 0; outline: 0; background: none; font-size: 16px; color: var(--ink); }
+  .pills { display: flex; gap: 6px; overflow-x: auto; margin: 12px -16px 12px; padding: 0 16px; scrollbar-width: none; }
+  .pills::-webkit-scrollbar { display: none; }
+  .pills button { flex: none; padding: 8px 13px; border-radius: 10px; background: var(--panel); border: 1px solid var(--line); font-size: 13px; font-weight: 700; color: var(--muted); white-space: nowrap; }
+  .pills button.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .pills hr { flex: none; width: 1px; border: 0; background: var(--line); margin: 4px 2px; }
+  .count { font-size: 12.5px; color: var(--muted); margin: 0 2px 8px; }
+  .irow { display: flex; align-items: center; gap: 12px; padding: 12px; cursor: pointer; }
+  .irow + .irow { border-top: 1px solid var(--line); }
+  .irow .e { width: 42px; height: 42px; border-radius: 12px; background: var(--panel2); display: grid; place-items: center; font-size: 22px; flex: none; }
+  .irow .top { display: flex; justify-content: space-between; gap: 8px; }
+  .irow .top b { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .irow .top span { font-weight: 800; font-size: 13.5px; white-space: nowrap; }
+  .meter { height: 6px; border-radius: 3px; background: var(--panel2); overflow: hidden; margin: 7px 0 5px; }
+  .meter i { display: block; height: 100%; border-radius: 3px; background: var(--ok); transition: width .3s; }
+  .irow.low .meter i { background: var(--low); } .irow.out .meter i { background: var(--out); }
+  .irow .sub { font-size: 12px; color: var(--muted); }
+  .irow .sub.warn { color: var(--low); } .irow .sub.hot { color: var(--out); }
+  .qb { display: flex; gap: 6px; flex: none; }
+  .qb button { width: 38px; height: 38px; border-radius: 11px; background: var(--panel2); border: 1px solid var(--line); display: grid; place-items: center; }
+  .qb button:last-child { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .qb button:active { transform: scale(.92); }
+  .qb .ic { width: 18px; height: 18px; stroke-width: 2.5; }
+  .empty { padding: 36px 16px; text-align: center; color: var(--muted); }
+
+  /* shopping */
+  .progress { padding: 16px; }
+  .progress .pnum { display: flex; align-items: baseline; gap: 8px; margin: 6px 0 10px; }
+  .progress .pnum b { font-size: 34px; font-weight: 800; line-height: 1; }
+  .progress .pnum span { color: var(--muted); font-weight: 600; }
+  .pbar { height: 8px; border-radius: 4px; background: var(--panel2); overflow: hidden; }
+  .pbar i { display: block; height: 100%; background: var(--accent); transition: width .3s; }
+  .add-extra { display: flex; gap: 8px; margin-top: 10px; }
+  .input { height: 46px; border-radius: 13px; border: 1px solid var(--line); background: var(--panel); padding: 0 14px; font-size: 16px; width: 100%; min-width: 0; color: var(--ink); outline-color: var(--accent); }
+  .sheet .input { background: var(--panel2); }
+  .srow { display: flex; align-items: center; gap: 12px; padding: 12px 14px; width: 100%; }
+  .srow + .srow { border-top: 1px solid var(--line); }
+  .box { width: 24px; height: 24px; border-radius: 7px; border: 2px solid var(--muted); display: grid; place-items: center; flex: none; color: var(--accent-ink); }
+  .done .box { background: var(--accent); border-color: var(--accent); }
+  .done b { color: var(--muted); text-decoration: line-through; }
+  .box .ic { width: 15px; height: 15px; stroke-width: 3.2; }
+  .kind { font-size: 10.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; padding: 3px 7px; border-radius: 6px; background: var(--panel2); color: var(--muted); }
+  .kind.auto { color: var(--low); background: rgba(255,181,71,.12); }
+  .dock { position: sticky; bottom: calc(84px + env(safe-area-inset-bottom)); margin-top: 18px; }
+  .btn { width: 100%; height: 52px; border-radius: 15px; background: var(--accent); color: var(--accent-ink); font-weight: 800; font-size: 15.5px; text-align: center; }
+  .btn.dim { background: var(--panel2); color: var(--ink); border: 1px solid var(--line); }
+  .btn.sq { width: 46px; height: 46px; flex: none; display: grid; place-items: center; border-radius: 13px; }
+  .btn:disabled { background: var(--panel2); color: var(--muted); cursor: default; }
+
+  /* sync */
+  .topo { padding: 22px 16px 18px; }
+  .nodes { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .node { width: 108px; text-align: center; }
+  .node .dev { width: 58px; height: 58px; margin: 0 auto 8px; border-radius: 17px; background: var(--panel2); border: 1px solid var(--line); display: grid; place-items: center; }
+  .node .dev .ic { width: 28px; height: 28px; color: var(--muted); }
+  .node.main .dev { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(197,245,74,.1); }
+  .node.main .dev .ic { color: var(--accent); }
+  .node b { display: block; font-size: 13.5px; }
+  .node small { color: var(--muted); font-size: 11.5px; }
+  .node .role { display: inline-block; margin-bottom: 6px; font-size: 10px; font-weight: 800; letter-spacing: .08em; padding: 2px 6px; border-radius: 5px; background: var(--accent); color: var(--accent-ink); }
+  .node .role.m { background: var(--panel2); color: var(--muted); }
+  .link { flex: 1; height: 2px; margin-bottom: 34px; position: relative; background: repeating-linear-gradient(90deg, var(--line) 0 5px, transparent 5px 10px); }
+  .link i { display: none; position: absolute; top: -2px; width: 14px; height: 6px; border-radius: 3px; background: var(--accent); box-shadow: 0 0 10px var(--accent); animation: flow 1s linear infinite; }
+  .busy .link i { display: block; }
+  .link i:nth-child(2) { animation-delay: .33s; } .link i:nth-child(3) { animation-delay: .66s; }
+  @keyframes flow { from { left: 0; opacity: 0; } 20%, 80% { opacity: 1; } to { left: calc(100% - 14px); opacity: 0; } }
+  .kpis { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 18px; border-top: 1px solid var(--line); padding-top: 14px; text-align: center; }
+  .kpis div + div { border-left: 1px solid var(--line); }
+  .kpis b { display: block; font-size: 20px; font-weight: 800; }
+  .kpis small { color: var(--muted); font-size: 11.5px; }
+  .lrow { display: flex; align-items: center; gap: 12px; padding: 14px; width: 100%; }
+  .lrow + .lrow { border-top: 1px solid var(--line); }
+  .lrow .ic.lead { color: var(--muted); }
+  .lrow .chev { color: var(--muted); width: 16px; height: 16px; }
+  .note { color: var(--muted); font-size: 12.5px; margin: 12px 2px 0; }
+
+  /* nav */
+  .nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 440px; padding: 0 12px calc(10px + env(safe-area-inset-bottom)); z-index: 10; }
+  .nav-in { display: grid; grid-template-columns: repeat(4, 1fr); background: rgba(22,25,30,.92); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid var(--line); border-radius: 20px; padding: 6px; }
+  .nav button { position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 0 6px; border-radius: 14px; font-size: 10.5px; font-weight: 700; color: var(--muted); }
+  .nav button.active { background: var(--panel2); color: var(--accent); }
+  .nav .ic { width: 22px; height: 22px; }
+  .badge { position: absolute; top: 3px; left: calc(50% + 6px); min-width: 17px; height: 17px; padding: 0 4px; border-radius: 6px; background: var(--low); color: #1d1300; font-size: 10.5px; font-weight: 800; line-height: 17px; text-align: center; }
+  .fab { position: fixed; right: max(20px, calc(50% - 200px)); bottom: calc(92px + env(safe-area-inset-bottom)); width: 56px; height: 56px; border-radius: 18px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; box-shadow: 0 10px 30px -8px rgba(197,245,74,.55); z-index: 11; }
+  .fab .ic { width: 26px; height: 26px; stroke-width: 2.6; }
+
+  /* sheets */
+  .scrim { position: fixed; inset: 0; background: rgba(0,0,0,.6); opacity: 0; pointer-events: none; transition: opacity .25s; z-index: 20; }
+  .scrim.open { opacity: 1; pointer-events: auto; }
+  .sheet { position: fixed; left: 50%; bottom: 0; width: 100%; max-width: 440px; max-height: 90dvh; overflow-y: auto; transform: translate(-50%, 105%); transition: transform .32s cubic-bezier(.2,.8,.2,1); background: var(--panel); border: 1px solid var(--line); border-bottom: 0; border-radius: 24px 24px 0 0; padding: 10px 18px calc(22px + env(safe-area-inset-bottom)); z-index: 21; }
+  .sheet.open { transform: translate(-50%, 0); }
+  .grab { width: 38px; height: 4px; border-radius: 2px; background: var(--line); margin: 0 auto 16px; }
+  .sh-head { display: flex; align-items: center; gap: 14px; }
+  .sh-head .e { width: 64px; height: 64px; border-radius: 18px; background: var(--panel2); display: grid; place-items: center; font-size: 36px; flex: none; }
+  .sh-head h2 { margin: 0; font-size: 22px; font-weight: 800; }
+  .sh-head p { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+  .gauge { margin: 18px 0; padding: 16px; border-radius: 16px; background: var(--panel2); }
+  .gauge-row { display: flex; align-items: center; justify-content: space-between; }
+  .gauge-row b { font-size: 40px; font-weight: 800; line-height: 1; letter-spacing: -.03em; }
+  .gauge-row b small { font-size: 15px; color: var(--muted); font-weight: 700; letter-spacing: 0; margin-left: 4px; }
+  .gauge .qb button { width: 48px; height: 48px; border-radius: 14px; }
+  .gauge .meter { height: 8px; margin: 14px 0 6px; background: var(--bg); }
+  .gauge .scale { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--muted); }
+  .kv { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); border-radius: 14px; overflow: hidden; margin-bottom: 16px; }
+  .kv div { background: var(--panel); padding: 11px 12px; }
+  .kv dt { font-size: 10.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .kv dd { margin: 3px 0 0; font-weight: 700; font-size: 14px; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; min-width: 0; }
+  .field > span { font-size: 10.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .emojis { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+  .emojis button { flex: none; width: 42px; height: 42px; border-radius: 11px; background: var(--panel2); font-size: 21px; text-align: center; border: 1px solid transparent; }
+  .emojis button.on { border-color: var(--accent); background: rgba(197,245,74,.12); }
+  .qr { width: 210px; margin: 16px auto 10px; padding: 12px; border-radius: 16px; background: #fff; color: #000; }
+  .code { text-align: center; font-size: 30px; font-weight: 800; letter-spacing: .16em; color: var(--accent); margin: 4px 0; }
+  .center { text-align: center; color: var(--muted); font-size: 13.5px; margin: 0 0 16px; }
+
+  .toast { position: fixed; left: 50%; bottom: calc(160px + env(safe-area-inset-bottom)); transform: translate(-50%, 16px); background: var(--accent); color: var(--accent-ink); padding: 10px 16px; border-radius: 12px; font-weight: 800; font-size: 14px; opacity: 0; transition: .25s; z-index: 30; pointer-events: none; white-space: nowrap; }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+</style>
+</head>
+<body>
+<div class="app">
+  <section class="screen" id="overview"></section>
+
+  <section class="screen" id="items" hidden>
+    <div class="bar-top"><h1 class="h">Items</h1><span class="sync-slot"></span></div>
+    <label class="search"><i data-icon="search"></i><input id="q" type="search" placeholder="Search items" autocomplete="off"></label>
+    <div class="pills" id="pills"></div>
+    <p class="count" id="count"></p>
+    <div class="panel" id="rows"></div>
+  </section>
+
+  <section class="screen" id="shopping" hidden>
+    <div class="bar-top"><h1 class="h">Shopping</h1><span class="sync-slot"></span></div>
+    <div class="panel progress" id="progress"></div>
+    <form id="extra-form" class="add-extra"><input class="input" id="extra" placeholder="Add an extra…" autocomplete="off"><button class="btn sq" aria-label="Add"><i data-icon="plus"></i></button></form>
+    <div id="shop-list"></div>
+    <div class="dock"><button class="btn" id="restock"></button></div>
+  </section>
+
+  <section class="screen" id="sync" hidden>
+    <div class="bar-top"><h1 class="h">Sync</h1></div>
+    <div id="sync-body"></div>
+  </section>
+</div>
+
+<button class="fab" data-add aria-label="Add item"><i data-icon="plus"></i></button>
+
+<nav class="nav"><div class="nav-in">
+  <button data-go="overview" class="active"><i data-icon="grid"></i>Overview</button>
+  <button data-go="items"><i data-icon="list"></i>Items</button>
+  <button data-go="shopping"><i data-icon="cart"></i>Shopping<b class="badge" id="shop-badge"></b></button>
+  <button data-go="sync"><i data-icon="sync"></i>Sync</button>
+</div></nav>
+
+<div class="scrim" id="scrim"></div>
+
+<div class="sheet" data-sheet="detail"><div class="grab"></div><div id="detail"></div></div>
+
+<div class="sheet" data-sheet="add">
+  <div class="grab"></div>
+  <h2 class="h" style="font-size:22px;margin-bottom:14px">New item</h2>
+  <form id="add-form">
+    <label class="field"><span>Name</span><input class="input" name="name" placeholder="e.g. Chickpeas" required autocomplete="off"></label>
+    <div class="field"><span>Icon</span><div class="emojis" id="emojis"></div></div>
+    <div class="two">
+      <label class="field"><span>Location</span><select class="input" name="location" id="loc-select"></select></label>
+      <label class="field"><span>Expires</span><input class="input" name="expiry" type="date"></label>
+    </div>
+    <div class="two">
+      <label class="field"><span>Quantity</span><input class="input" name="qty" type="number" min="0" step="any" value="1" inputmode="decimal"></label>
+      <label class="field"><span>Unit</span><select class="input" name="unit" id="unit-select"></select></label>
+    </div>
+    <label class="field"><span>Alert when below</span><input class="input" name="min" type="number" min="0" step="any" value="1" inputmode="decimal"></label>
+    <div class="two" style="margin-top:6px"><button type="button" class="btn dim" data-close>Cancel</button><button class="btn">Add item</button></div>
+  </form>
+</div>
+
+<div class="sheet" data-sheet="pair">
+  <div class="grab"></div>
+  <h2 class="h" style="font-size:22px">Pair a phone</h2>
+  <div class="qr" id="qr"></div>
+  <div class="code" id="code"></div>
+  <p class="center">On the other phone: My Pantry → <b>Join a pantry</b> → scan or type the code. It downloads a full copy, then stays in step.</p>
+  <button class="btn dim" data-close>Done</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="shared/pantry-core.js"></script>
+<script>
+  const P = window.Pantry;
+  const $ = (s) => document.querySelector(s);
+  const state = { tab: 'overview', loc: 'all', filter: null, q: '', open: null, emoji: P.emojis[0] };
+
+  function syncChip() {
+    const s = P.sync;
+    const cls = s.syncing ? 'busy' : s.pending ? 'pending' : '';
+    const text = s.syncing ? 'SYNCING' : s.pending ? `${s.pending} PENDING` : 'IN SYNC';
+    return `<button class="sync-chip ${cls}" data-go="sync"><i></i>${text}</button>`;
+  }
+
+  function renderOverview() {
+    const s = P.stats();
+    const soon = P.items.filter(P.expiring).sort((a, b) => P.daysLeft(a) - P.daysLeft(b));
+    const ok = s.total - s.out - s.low - s.expiringOnly;
+    const seg = (n, c) => (n ? `<i style="flex:${n};background:${c}"></i>` : '');
+    $('#overview').innerHTML = `
+      <div class="bar-top">
+        <span class="brand"><span class="logo">${P.icon('box')}</span>My Pantry</span>
+        ${syncChip()}
+      </div>
+      <div class="panel hero">
+        <span class="label">Needs attention</span>
+        <div class="hero-num"><b>${s.attention}</b><span>of ${s.total} items</span></div>
+        <div class="stack">${seg(s.out, 'var(--out)')}${seg(s.low, 'var(--low)')}${seg(s.expiringOnly, 'var(--info)')}${seg(ok, 'var(--ok)')}</div>
+        <div class="legend">
+          <span style="--c:var(--out)">${s.out} out</span>
+          <span style="--c:var(--low)">${s.low} low</span>
+          <span style="--c:var(--info)">${s.expiringOnly} expiring</span>
+          <span style="--c:var(--ok)">${ok} fine</span>
+        </div>
+      </div>
+      <div class="tiles">
+        <button class="panel tile" data-go="shopping"><span class="tile-top"><span class="label">Shopping</span>${P.icon('cart')}</span><b>${s.shopping}</b></button>
+        <button class="panel tile" data-go="items" data-filter="soon"><span class="tile-top"><span class="label">Expiring ≤7d</span>${P.icon('clock')}</span><b style="color:var(--out)">${s.expiring}</b></button>
+        <button class="panel tile" data-go="items" data-filter="low"><span class="tile-top"><span class="label">Low / out</span>${P.icon('alert')}</span><b style="color:var(--low)">${s.low + s.out}</b></button>
+        <button class="panel tile" data-go="sync"><span class="tile-top"><span class="label">Last sync</span>${P.icon('sync')}</span><b style="font-size:20px">${P.sync.syncing ? '…' : P.sync.lastSync}</b></button>
+      </div>
+      <div class="sec"><span class="label">Locations</span></div>
+      <div class="locs">${P.locations.map((l) => {
+        const inLoc = P.items.filter((i) => i.location === l.id);
+        const warn = inLoc.filter((i) => P.status(i) !== 'ok' || P.expiring(i)).length;
+        return `<button class="panel loc" data-go="items" data-filter="" data-loc-go="${l.id}"><span class="e">${l.icon}</span><span><b>${l.name}</b><small>${inLoc.length} items${warn ? ` · <em>${warn} ⚠</em>` : ''}</small></span></button>`;
+      }).join('')}</div>
+      <div class="sec"><span class="label">Use soon</span><button class="more" data-go="items" data-filter="soon">See all</button></div>
+      <div class="panel timeline">${soon.map((i) => {
+        const d = P.daysLeft(i);
+        return `<button class="r" data-open="${i.id}"><span class="days ${d <= 1 ? 'hot' : 'warm'}">${d < 0 ? 'EXP' : d === 0 ? 'TODAY' : d + 'd'}</span><span class="grow"><b>${i.emoji} ${P.esc(i.name)}</b><small>${P.loc(i.location).name} · ${P.fmtQty(i)}</small></span></button>`;
+      }).join('')}</div>`;
+  }
+
+  function renderItems() {
+    const pill = (attr, on, label) => `<button ${attr} class="${on ? 'on' : ''}">${label}</button>`;
+    $('#pills').innerHTML =
+      pill('data-filter-set=""', !state.filter, 'All') +
+      pill('data-filter-set="low"', state.filter === 'low', 'Low / out') +
+      pill('data-filter-set="soon"', state.filter === 'soon', 'Expiring') + '<hr>' +
+      pill('data-loc="all"', state.loc === 'all', 'Everywhere') +
+      P.locations.map((l) => pill(`data-loc="${l.id}"`, state.loc === l.id, `${l.icon} ${l.name}`)).join('');
+
+    const q = state.q.trim().toLowerCase();
+    const list = P.items.filter((i) =>
+      (state.loc === 'all' || i.location === state.loc) &&
+      (!q || i.name.toLowerCase().includes(q) || i.category.toLowerCase().includes(q)) &&
+      (state.filter !== 'low' || P.status(i) !== 'ok') &&
+      (state.filter !== 'soon' || P.expiring(i)))
+      .sort((a, b) => P.level(a) - P.level(b));
+    $('#count').textContent = `${list.length} item${list.length === 1 ? '' : 's'} · lowest stock first`;
+    $('#rows').innerHTML = list.map((i) => {
+      const st = P.status(i);
+      const d = P.daysLeft(i);
+      const sub = st === 'out' ? ['hot', 'Out of stock'] : P.expiring(i) ? [d <= 1 ? 'hot' : 'warn', P.expiryLabel(i)]
+        : st === 'low' ? ['warn', `Below ${P.fmtQty(i, i.min)}`] : ['', `${P.loc(i.location).name} · ${P.esc(i.category)}`];
+      return `
+        <div class="irow ${st}" data-open="${i.id}">
+          <span class="e">${i.emoji}</span>
+          <span class="grow">
+            <span class="top"><b>${P.esc(i.name)}</b><span>${P.fmtQty(i)}</span></span>
+            <span class="meter"><i style="width:${P.level(i) * 100}%"></i></span>
+            <span class="sub ${sub[0]}">${sub[1]}</span>
+          </span>
+          <span class="qb">
+            <button data-adj="-1" data-id="${i.id}" aria-label="Use one">${P.icon('minus')}</button>
+            <button data-adj="1" data-id="${i.id}" aria-label="Add one">${P.icon('plus')}</button>
+          </span>
+        </div>`;
+    }).join('') || '<p class="empty">No items match.</p>';
+  }
+
+  function renderShop() {
+    const { auto, extras } = P.shoppingList();
+    const all = [...auto, ...extras];
+    const n = P.checkedCount();
+    $('#progress').innerHTML = `
+      <span class="label">In the basket</span>
+      <div class="pnum"><b>${n}</b><span>of ${all.length} items</span></div>
+      <div class="pbar"><i style="width:${all.length ? (n / all.length) * 100 : 0}%"></i></div>`;
+    $('#shop-list').innerHTML = `
+      <div class="sec"><span class="label">List</span><span class="label">${auto.length} auto · ${extras.length} extra</span></div>
+      <div class="panel">${all.map((e) => `
+        <button class="srow ${e.checked ? 'done' : ''}" data-toggle="${e.key}">
+          <span class="box">${e.checked ? P.icon('check') : ''}</span>
+          <span class="grow"><b>${e.emoji} ${P.esc(e.name)}</b><small>${P.esc(e.note || 'Extra')}</small></span>
+          <span class="kind ${e.auto ? 'auto' : ''}">${e.auto ? 'Low' : 'Extra'}</span>
+        </button>`).join('') || '<p class="empty">List is empty.</p>'}</div>`;
+    const btn = $('#restock');
+    btn.disabled = !n;
+    btn.textContent = n ? `Restock ${n} → inventory` : 'Tick items as you shop';
+    $('#shop-badge').textContent = all.length;
+    $('#shop-badge').hidden = !all.length;
+  }
+
+  function renderSync() {
+    const s = P.sync;
+    const second = P.devices[1];
+    $('#sync-body').innerHTML = `
+      <div class="panel topo ${s.syncing ? 'busy' : ''}">
+        <div class="nodes">
+          <div class="node main"><span class="role">MAIN</span><div class="dev">${P.icon('phone')}</div><b>This phone</b><small>master copy</small></div>
+          <div class="link"><i></i><i></i><i></i></div>
+          <div class="node"><span class="role m">MEMBER</span><div class="dev">${P.icon('phone')}</div><b>Second Phone</b><small>seen ${second.lastSeen}</small></div>
+        </div>
+        <div class="kpis">
+          <div><b style="color:${s.pending ? 'var(--low)' : 'var(--ok)'}">${s.pending}</b><small>changes waiting</small></div>
+          <div><b>${s.syncing ? '…' : s.lastSync.replace(' ago', '')}</b><small>last sync</small></div>
+          <div><b>${P.devices.length}</b><small>phones</small></div>
+        </div>
+      </div>
+      <div style="margin-top:12px"><button class="btn" data-sync ${s.syncing ? 'disabled' : ''}>${s.syncing ? 'Syncing with Second Phone…' : 'Sync now'}</button></div>
+      <p class="note">${s.pending && !s.syncing ? 'Second Phone gets these the next time both apps are open.' : 'Changes travel directly between your phones, encrypted.'}</p>
+      <div class="sec"><span class="label">Manage</span></div>
+      <div class="panel">
+        <button class="lrow" data-pair>${P.icon('qr', 'lead')}<span class="grow"><b>Pair a new phone</b><small>Show a QR code</small></span>${P.icon('chevron', 'chev')}</button>
+        <button class="lrow" data-toast="Backup file saved (sample)">${P.icon('download', 'lead')}<span class="grow"><b>Export backup</b><small>Last: 6 days ago</small></span>${P.icon('chevron', 'chev')}</button>
+        <button class="lrow" data-toast="Opens a file picker (sample)">${P.icon('upload', 'lead')}<span class="grow"><b>Restore backup</b><small>Replace this phone's data</small></span>${P.icon('chevron', 'chev')}</button>
+      </div>
+      <div class="sec"><span class="label">Recent changes</span></div>
+      <div class="panel">${P.activity.slice(0, 5).map((a) => `
+        <div class="lrow">${P.icon('phone', 'lead')}<span class="grow"><b>${P.esc(a.text)}</b><small>${a.who} · ${a.ago}</small></span></div>`).join('')}</div>`;
+  }
+
+  function renderDetail() {
+    const i = P.byId(state.open);
+    const l = P.loc(i.location);
+    const target = i.min * 2;
+    $('#detail').innerHTML = `
+      <div class="sh-head"><span class="e">${i.emoji}</span><div><h2>${P.esc(i.name)}</h2><p>${l.icon} ${l.name} · ${P.esc(i.category)}</p></div></div>
+      <div class="gauge irow ${P.status(i)}" style="display:block;cursor:default">
+        <div class="gauge-row">
+          <b>${P.num(i.qty)}<small>${P.unitText(i.unit, i.qty)}</small></b>
+          <span class="qb">
+            <button data-adj="-1" data-id="${i.id}" aria-label="Use one">${P.icon('minus')}</button>
+            <button data-adj="1" data-id="${i.id}" aria-label="Add one">${P.icon('plus')}</button>
+          </span>
+        </div>
+        <div class="meter"><i style="width:${P.level(i) * 100}%"></i></div>
+        <div class="scale"><span>0</span><span>alert &lt; ${P.num(i.min)}</span><span>full ${P.num(target)}</span></div>
+      </div>
+      <dl class="kv">
+        <div><dt>Expires</dt><dd>${P.expiryLabel(i) || '—'}</dd></div>
+        <div><dt>On list</dt><dd>${P.status(i) === 'ok' ? 'No' : 'Yes · ' + P.fmtQty(i, P.suggest(i))}</dd></div>
+        <div><dt>Changed by</dt><dd>${i.changedBy}</dd></div>
+        <div><dt>When</dt><dd>${i.changedAgo}</dd></div>
+      </dl>
+      <div class="two"><button class="btn dim" data-toast="Editing comes with the real app">Edit</button><button class="btn" data-close>Done</button></div>`;
+  }
+
+  function render() {
+    renderOverview();
+    renderItems();
+    renderShop();
+    renderSync();
+    if (state.open) renderDetail();
+    document.querySelectorAll('.sync-slot').forEach((el) => (el.innerHTML = syncChip()));
+  }
+
+  function go(tab, filter, loc) {
+    state.tab = tab;
+    if (filter !== undefined) { state.filter = filter; state.loc = loc || 'all'; }
+    document.querySelectorAll('.screen').forEach((s) => (s.hidden = s.id !== tab));
+    document.querySelectorAll('.nav button').forEach((b) => b.classList.toggle('active', b.dataset.go === tab));
+    $('.fab').hidden = !(tab === 'overview' || tab === 'items');
+    closeSheets();
+    scrollTo(0, 0);
+    render();
+  }
+
+  function openSheet(name) {
+    document.querySelectorAll('.sheet').forEach((s) => s.classList.toggle('open', s.dataset.sheet === name));
+    $('#scrim').classList.add('open');
+  }
+  function closeSheets() {
+    document.querySelectorAll('.sheet').forEach((s) => s.classList.remove('open'));
+    $('#scrim').classList.remove('open');
+    state.open = null;
+  }
+
+  let toastTimer;
+  function toast(msg) {
+    const t = $('#toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2000);
+  }
+
+  function paintEmojis() {
+    $('#emojis').innerHTML = P.emojis.map((e) => `<button type="button" data-emoji="${e}" class="${e === state.emoji ? 'on' : ''}">${e}</button>`).join('');
+  }
+
+  document.addEventListener('click', (e) => {
+    const at = (sel) => e.target.closest(sel);
+    let x;
+    if ((x = at('[data-adj]'))) return P.adjust(+x.dataset.id, +x.dataset.adj);
+    if ((x = at('[data-go]'))) return go(x.dataset.go, 'filter' in x.dataset ? x.dataset.filter || null : undefined, x.dataset.locGo);
+    if ((x = at('[data-open]'))) { state.open = +x.dataset.open; renderDetail(); return openSheet('detail'); }
+    if ((x = at('[data-loc]'))) { state.loc = x.dataset.loc; return renderItems(); }
+    if ((x = at('[data-filter-set]'))) { state.filter = x.dataset.filterSet || null; return renderItems(); }
+    if ((x = at('[data-toggle]'))) return P.toggleShop(x.dataset.toggle);
+    if ((x = at('[data-emoji]'))) { state.emoji = x.dataset.emoji; return paintEmojis(); }
+    if (at('[data-sync]')) return P.syncNow();
+    if (at('[data-pair]')) return openSheet('pair');
+    if (at('[data-add]')) return openSheet('add');
+    if (at('[data-close]') || e.target.id === 'scrim') return closeSheets();
+    if (at('#restock')) { const n = P.restock(); return toast(`${n} restocked`); }
+    if ((x = at('[data-toast]'))) return toast(x.dataset.toast);
+  });
+
+  $('#q').addEventListener('input', (e) => { state.q = e.target.value; renderItems(); });
+
+  $('#extra-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const v = $('#extra').value.trim();
+    if (!v) return;
+    P.addExtra(v);
+    $('#extra').value = '';
+  });
+
+  $('#add-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const f = new FormData(e.target);
+    const exp = f.get('expiry');
+    const item = P.addItem({
+      name: f.get('name').trim(), emoji: state.emoji, location: f.get('location'),
+      qty: f.get('qty'), unit: f.get('unit'), min: f.get('min'),
+      expiry: exp ? new Date(exp + 'T00:00') : null,
+    });
+    e.target.reset();
+    go('items', null, item.location);
+    toast(`${item.name} added`);
+  });
+
+  $('#loc-select').innerHTML = P.locations.map((l) => `<option value="${l.id}">${l.name}</option>`).join('');
+  $('#unit-select').innerHTML = P.units.map((u) => `<option>${u}</option>`).join('');
+  $('#qr').innerHTML = P.fakeQR();
+  $('#code').textContent = P.pairCode;
+  paintEmojis();
+  P.on(render);
+  render();
+</script>
+</body>
+</html>

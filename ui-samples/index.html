@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Pantry · UI samples</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #F4F1EC; color: #1F1D1A; font: 15px/1.5 "Segoe UI", system-ui, -apple-system, Roboto, sans-serif; padding: 32px 16px 48px; }
+  header { max-width: 1280px; margin: 0 auto 28px; }
+  h1 { font-size: 30px; margin: 0 0 6px; letter-spacing: -.01em; }
+  header p { margin: 0; color: #6B665E; max-width: 70ch; }
+  .grid { max-width: 1280px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 32px; justify-content: center; }
+  .opt { flex: 0 1 392px; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+  .opt h2 { margin: 0; font-size: 20px; }
+  .opt h2 span { color: #8A847A; font-weight: 600; margin-right: 6px; }
+  .opt p { margin: 0; color: #5A554D; }
+  .phone { width: 100%; max-width: 392px; aspect-ratio: 392 / 820; border: 10px solid #1B1B1D; border-radius: 46px; overflow: hidden; background: #000; box-shadow: 0 24px 50px -24px rgba(0,0,0,.45); }
+  .phone iframe { width: 100%; height: 100%; border: 0; display: block; }
+  ul { margin: 0; padding-left: 18px; color: #5A554D; }
+  a { color: #B34A26; font-weight: 700; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<header>
+  <h1>My Pantry: three UI directions</h1>
+  <p>They all use the same sample data, and everything works: +/− buttons, search, filters, tapping an item, the + add button, ticking the shopping list and restocking, Sync now, and pairing. Nothing is saved, so reload to reset. For the real feel, open one full screen on your phone.</p>
+</header>
+<main class="grid">
+  <section class="opt">
+    <h2><span>A</span>Pantry Shelf</h2>
+    <p>Warm and homey. Items are cards on a shelf, with a Home screen that tells you what needs doing today.</p>
+    <div class="phone"><iframe src="a-pantry-shelf.html" title="Sample A"></iframe></div>
+    <ul><li>Best for browsing and seeing things at a glance</li><li>Fewer items per screen (2-column cards)</li></ul>
+    <a href="a-pantry-shelf.html" target="_blank">Open full screen ↗</a>
+  </section>
+  <section class="opt">
+    <h2><span>B</span>Clean List</h2>
+    <p>Looks like a built-in phone app. It opens straight on the list, grouped by location. Dark mode follows your phone's setting.</p>
+    <div class="phone"><iframe src="b-clean-list.html" title="Sample B"></iframe></div>
+    <ul><li>Fastest: most items per screen, fewest taps</li><li>Plainer: no dashboard</li></ul>
+    <a href="b-clean-list.html" target="_blank">Open full screen ↗</a>
+  </section>
+  <section class="opt">
+    <h2><span>C</span>Dashboard</h2>
+    <p>Dark and data-forward. Big numbers, a stock meter on every item, location tiles, and the lowest stock sorted to the top.</p>
+    <div class="phone"><iframe src="c-dashboard.html" title="Sample C"></iframe></div>
+    <ul><li>Best for seeing how full everything is</li><li>Always dark; busier to look at</li></ul>
+    <a href="c-dashboard.html" target="_blank">Open full screen ↗</a>
+  </section>
+</main>
+</body>
+</html>

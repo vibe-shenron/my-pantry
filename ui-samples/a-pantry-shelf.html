@@ -1,0 +1,515 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F7F1E7">
+<title>My Pantry · Sample A · Pantry Shelf</title>
+<style>
+  :root {
+    --bg: #F7F1E7; --card: #FFFDF9; --ink: #2E2419; --muted: #8A7B69; --line: #EADFCF;
+    --accent: #C4552F; --accent-soft: #F6DED3;
+    --ok: #5E8B4E; --ok-soft: #E3EDD9; --low: #A86B12; --low-soft: #F8E7C7; --out: #B93A32; --out-soft: #F6D8D5;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --sans: ui-rounded, "SF Pro Rounded", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: #ECE2D2; color: var(--ink); font: 15px/1.4 var(--sans); -webkit-tap-highlight-color: transparent; }
+  button, input, select { font: inherit; color: inherit; }
+  button { cursor: pointer; border: 0; background: none; padding: 0; text-align: inherit; }
+  [hidden] { display: none !important; }
+  .ic { width: 20px; height: 20px; flex: none; }
+
+  .app { max-width: 440px; margin: 0 auto; min-height: 100dvh; background: var(--bg); padding: 0 18px calc(112px + env(safe-area-inset-bottom)); }
+
+  /* headers */
+  .hero, .page-head { padding-top: calc(20px + env(safe-area-inset-top)); }
+  .top, .page-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .page-head { padding-bottom: 14px; }
+  .date { margin: 0; color: var(--muted); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
+  h1 { font-family: var(--serif); font-size: 36px; line-height: 1.05; margin: 8px 0 6px; font-weight: 600; letter-spacing: -.01em; }
+  .page-head h1 { margin: 0; }
+  .sub { margin: 0; color: var(--muted); }
+  .pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 11px; border-radius: 999px; background: var(--card); border: 1px solid var(--line); font-size: 12px; font-weight: 700; white-space: nowrap; }
+  .pill i { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
+  .pill.pending i { background: #D9981F; }
+  .pill.busy i { background: var(--accent); animation: pulse .9s infinite alternate; }
+  @keyframes pulse { to { opacity: .25; } }
+
+  /* home */
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 20px 0 4px; }
+  .stat { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px 12px 12px; display: flex; flex-direction: column; gap: 4px; }
+  .stat b { font-family: var(--serif); font-size: 32px; line-height: 1; }
+  .stat span { font-size: 12px; color: var(--muted); font-weight: 700; }
+  .stat.low { background: var(--low-soft); border-color: transparent; } .stat.low b { color: var(--low); }
+  .stat.soon { background: var(--out-soft); border-color: transparent; } .stat.soon b { color: var(--out); }
+  .sec { display: flex; justify-content: space-between; align-items: baseline; font-family: var(--serif); font-size: 21px; font-weight: 600; margin: 28px 0 10px; }
+  .sec small { font: 700 12px var(--sans); color: var(--muted); }
+  .link { color: var(--accent); font: 700 13px var(--sans); }
+  .shelf { display: flex; gap: 10px; overflow-x: auto; margin: 0 -18px; padding: 2px 18px 6px; scroll-snap-type: x mandatory; scrollbar-width: none; }
+  .shelf::-webkit-scrollbar, .chips::-webkit-scrollbar { display: none; }
+  .mini { flex: 0 0 118px; scroll-snap-align: start; background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 12px; display: flex; flex-direction: column; align-items: flex-start; gap: 7px; }
+  .em { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 16px; background: var(--bg); font-size: 27px; flex: none; }
+  .em.sm { width: 40px; height: 40px; font-size: 21px; border-radius: 13px; }
+  .em.xl { width: 72px; height: 72px; font-size: 42px; border-radius: 22px; }
+  .nm { font-weight: 800; font-size: 14px; line-height: 1.2; }
+  .tag, .chip { font-size: 11.5px; font-weight: 800; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+  .low.tag, .low.chip { background: var(--low-soft); color: var(--low); }
+  .out.tag, .out.chip { background: var(--out-soft); color: var(--out); }
+  .ok.tag, .ok.chip { background: var(--ok-soft); color: var(--ok); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 20px; overflow: hidden; }
+  .row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 14px; }
+  .row + .row { border-top: 1px solid var(--line); }
+  .grow { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .grow b { font-weight: 700; }
+  .grow small { color: var(--muted); font-size: 12.5px; }
+  .dev { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); flex: none; }
+  .dev .ic { width: 18px; height: 18px; }
+  .dev.alt { background: var(--ok-soft); color: var(--ok); }
+
+  /* items */
+  .search { display: flex; align-items: center; gap: 8px; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 0 14px; height: 48px; color: var(--muted); }
+  .search input { border: 0; outline: 0; background: none; flex: 1; min-width: 0; font-size: 16px; color: var(--ink); }
+  .chips { display: flex; gap: 8px; overflow-x: auto; margin: 12px -18px 16px; padding: 0 18px; scrollbar-width: none; }
+  .chips button { flex: none; padding: 8px 14px; border-radius: 999px; background: var(--card); border: 1px solid var(--line); font-weight: 700; font-size: 13px; white-space: nowrap; }
+  .chips button.on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .chips .warn.on { background: var(--low); border-color: var(--low); color: #fff; }
+  .chips hr { flex: none; width: 1px; border: 0; background: var(--line); margin: 4px 2px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .item { background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 12px; display: flex; flex-direction: column; gap: 3px; cursor: pointer; }
+  .item-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+  .item .meta { color: var(--muted); font-size: 12px; }
+  .item .meta.warn { color: var(--out); font-weight: 700; }
+  .bar { height: 5px; border-radius: 3px; background: var(--line); overflow: hidden; margin: 9px 0 10px; }
+  .bar i { display: block; height: 100%; background: var(--ok); border-radius: 3px; transition: width .3s; }
+  .item.low .bar i { background: #D9981F; } .item.out .bar i { background: var(--out); }
+  .step { display: flex; align-items: center; justify-content: space-between; background: var(--bg); border-radius: 14px; padding: 4px; }
+  .step button { width: 34px; height: 34px; border-radius: 11px; background: var(--card); display: grid; place-items: center; box-shadow: 0 1px 2px rgba(46,36,25,.12); }
+  .step button:active { transform: scale(.92); }
+  .step .ic { width: 16px; height: 16px; }
+  .step span { font-weight: 800; font-size: 13.5px; }
+  .empty { text-align: center; color: var(--muted); padding: 40px 0; grid-column: 1 / -1; }
+
+  /* shopping */
+  .add-extra { display: flex; gap: 8px; margin: 16px 0 0; }
+  .input { height: 48px; border-radius: 14px; border: 1px solid var(--line); background: var(--card); padding: 0 14px; font-size: 16px; width: 100%; min-width: 0; outline-color: var(--accent); }
+  .sheet .input { background: var(--bg); }
+  .check .box { width: 26px; height: 26px; border-radius: 9px; border: 2px solid var(--line); display: grid; place-items: center; flex: none; color: #fff; }
+  .check.done .box { background: var(--ok); border-color: var(--ok); }
+  .check.done b { text-decoration: line-through; color: var(--muted); }
+  .check .ic { width: 16px; height: 16px; stroke-width: 3; }
+  .dock { position: sticky; bottom: calc(88px + env(safe-area-inset-bottom)); margin-top: 20px; }
+
+  /* sync */
+  .sync-hero { padding: 22px 18px; text-align: center; }
+  .phones { display: flex; align-items: flex-start; justify-content: center; gap: 6px; margin-bottom: 16px; }
+  .ph { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100px; }
+  .ph .ic { width: 42px; height: 42px; color: var(--muted); stroke-width: 1.6; }
+  .ph.main .ic { color: var(--accent); }
+  .ph small { font-size: 11.5px; color: var(--muted); line-height: 1.3; }
+  .ph small b { color: var(--ink); }
+  .wire { flex: 1; max-width: 90px; height: 2px; margin-top: 20px; position: relative; background: repeating-linear-gradient(90deg, var(--line) 0 6px, transparent 6px 11px); }
+  .wire i { display: none; position: absolute; top: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: travel 1.2s linear infinite; }
+  .busy .wire i { display: block; }
+  .wire i:nth-child(2) { animation-delay: .4s; } .wire i:nth-child(3) { animation-delay: .8s; }
+  @keyframes travel { from { left: 0; opacity: 0; } 20%, 80% { opacity: 1; } to { left: calc(100% - 8px); opacity: 0; } }
+  .sync-hero h3 { font-family: var(--serif); font-size: 23px; margin: 0 0 4px; }
+  .sync-hero p { color: var(--muted); margin: 0 0 16px; }
+  .fine { color: var(--muted); font-size: 12.5px; margin: 16px 4px 0; }
+
+  /* nav + fab */
+  .nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 440px; display: grid; grid-template-columns: repeat(4, 1fr); background: rgba(255,253,249,.93); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-top: 1px solid var(--line); padding: 6px 8px calc(6px + env(safe-area-inset-bottom)); z-index: 10; }
+  .nav button { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11px; font-weight: 700; color: var(--muted); padding: 6px 0; }
+  .nav .ic { width: 24px; height: 24px; }
+  .nav button.active { color: var(--accent); }
+  .badge { position: absolute; top: 2px; left: calc(50% + 6px); min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--accent); color: #fff; font-size: 10.5px; line-height: 18px; text-align: center; }
+  .fab { position: fixed; right: max(18px, calc(50% - 202px)); bottom: calc(84px + env(safe-area-inset-bottom)); width: 58px; height: 58px; border-radius: 20px; background: var(--accent); color: #fff; display: grid; place-items: center; box-shadow: 0 12px 24px -10px rgba(196,85,47,.8); z-index: 11; }
+  .fab .ic { width: 26px; height: 26px; }
+
+  /* sheets */
+  .scrim { position: fixed; inset: 0; background: rgba(46,36,25,.38); opacity: 0; pointer-events: none; transition: opacity .25s; z-index: 20; }
+  .scrim.open { opacity: 1; pointer-events: auto; }
+  .sheet { position: fixed; left: 50%; bottom: 0; width: 100%; max-width: 440px; max-height: 90dvh; overflow-y: auto; transform: translate(-50%, 105%); transition: transform .32s cubic-bezier(.2,.8,.2,1); background: var(--card); border-radius: 28px 28px 0 0; padding: 10px 20px calc(22px + env(safe-area-inset-bottom)); z-index: 21; }
+  .sheet.open { transform: translate(-50%, 0); }
+  .grab { width: 40px; height: 5px; border-radius: 3px; background: var(--line); margin: 0 auto 16px; }
+  .sheet-title { font-family: var(--serif); font-size: 26px; margin: 0 0 6px; }
+  .sheet-hero { display: flex; gap: 14px; align-items: center; }
+  .sheet-hero h2 { font-family: var(--serif); font-size: 26px; margin: 0; line-height: 1.1; }
+  .sheet-hero p { margin: 4px 0 0; color: var(--muted); }
+  .big-step { display: flex; align-items: center; justify-content: space-between; background: var(--bg); border-radius: 22px; padding: 10px; margin: 20px 0 14px; }
+  .big-step button { width: 56px; height: 56px; border-radius: 18px; background: var(--card); display: grid; place-items: center; box-shadow: 0 1px 3px rgba(46,36,25,.14); }
+  .big-step .ic { width: 24px; height: 24px; }
+  .big-step div { text-align: center; }
+  .big-step b { display: block; font-family: var(--serif); font-size: 40px; line-height: 1; }
+  .big-step span { color: var(--muted); font-weight: 700; font-size: 13px; }
+  .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 0 18px; }
+  .facts div { background: var(--bg); border-radius: 16px; padding: 11px 12px; }
+  .facts dt { font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+  .facts dd { margin: 3px 0 0; font-weight: 700; }
+  .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; min-width: 0; }
+  .field > span { font-size: 11.5px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .emojis { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
+  .emojis button { flex: none; width: 44px; height: 44px; font-size: 22px; border-radius: 13px; background: var(--bg); border: 2px solid transparent; text-align: center; }
+  .emojis button.on { border-color: var(--accent); background: var(--accent-soft); }
+  .btn { height: 50px; border-radius: 16px; background: var(--accent); color: #fff; font-weight: 800; padding: 0 20px; width: 100%; text-align: center; }
+  .btn.ghost { background: var(--bg); color: var(--ink); }
+  .btn.sq { width: 48px; flex: none; padding: 0; display: grid; place-items: center; }
+  .btn:disabled { opacity: .45; cursor: default; }
+  .qr { width: 210px; margin: 18px auto 8px; padding: 12px; background: #fff; border-radius: 20px; border: 1px solid var(--line); color: var(--ink); }
+  .code { text-align: center; color: var(--muted); margin: 0 0 14px; }
+  .code b { color: var(--ink); font-size: 20px; letter-spacing: .12em; margin-left: 4px; }
+  .steps { color: var(--muted); padding-left: 20px; margin: 0 0 18px; }
+  .steps li { margin: 4px 0; }
+
+  .toast { position: fixed; left: 50%; bottom: calc(154px + env(safe-area-inset-bottom)); transform: translate(-50%, 16px); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 14px; font-weight: 700; font-size: 14px; opacity: 0; transition: .25s; z-index: 30; pointer-events: none; white-space: nowrap; }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+</style>
+</head>
+<body>
+<div class="app">
+  <section class="screen" id="home"></section>
+
+  <section class="screen" id="items" hidden>
+    <header class="page-head"><h1>Items</h1><span class="sync-slot"></span></header>
+    <label class="search"><i data-icon="search"></i><input id="q" type="search" placeholder="Search rice, milk, soap…" autocomplete="off"></label>
+    <div class="chips" id="chips"></div>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <section class="screen" id="shopping" hidden>
+    <header class="page-head"><h1>Shopping</h1><span class="sync-slot"></span></header>
+    <p class="sub">Anything running low lands here by itself. Tick things off as you shop.</p>
+    <form id="extra-form" class="add-extra"><input class="input" id="extra" placeholder="Add something else…" autocomplete="off"><button class="btn sq" aria-label="Add"><i data-icon="plus"></i></button></form>
+    <div id="shop-list"></div>
+    <div class="dock"><button class="btn" id="restock"></button></div>
+  </section>
+
+  <section class="screen" id="sync" hidden>
+    <header class="page-head"><h1>Sync</h1></header>
+    <div id="sync-body"></div>
+  </section>
+</div>
+
+<button class="fab" data-add aria-label="Add item"><i data-icon="plus"></i></button>
+
+<nav class="nav">
+  <button data-go="home" class="active"><i data-icon="home"></i>Home</button>
+  <button data-go="items"><i data-icon="grid"></i>Items</button>
+  <button data-go="shopping"><i data-icon="cart"></i>Shopping<b class="badge" id="shop-badge"></b></button>
+  <button data-go="sync"><i data-icon="sync"></i>Sync</button>
+</nav>
+
+<div class="scrim" id="scrim"></div>
+
+<div class="sheet" data-sheet="detail"><div class="grab"></div><div id="detail"></div></div>
+
+<div class="sheet" data-sheet="add">
+  <div class="grab"></div>
+  <h2 class="sheet-title">Add an item</h2>
+  <form id="add-form">
+    <label class="field"><span>Name</span><input class="input" name="name" placeholder="e.g. Chickpeas" required autocomplete="off"></label>
+    <div class="field"><span>Icon</span><div class="emojis" id="emojis"></div></div>
+    <label class="field"><span>Where is it kept?</span><select class="input" name="location" id="loc-select"></select></label>
+    <div class="two">
+      <label class="field"><span>How many</span><input class="input" name="qty" type="number" min="0" step="any" value="1" inputmode="decimal"></label>
+      <label class="field"><span>Unit</span><select class="input" name="unit" id="unit-select"></select></label>
+    </div>
+    <div class="two">
+      <label class="field"><span>Warn me below</span><input class="input" name="min" type="number" min="0" step="any" value="1" inputmode="decimal"></label>
+      <label class="field"><span>Expires (optional)</span><input class="input" name="expiry" type="date"></label>
+    </div>
+    <div class="actions"><button type="button" class="btn ghost" data-close>Cancel</button><button class="btn">Add item</button></div>
+  </form>
+</div>
+
+<div class="sheet" data-sheet="pair">
+  <div class="grab"></div>
+  <h2 class="sheet-title">Add another phone</h2>
+  <p class="sub">On the other phone, open My Pantry, choose <b>Join a pantry</b> and scan this.</p>
+  <div class="qr" id="qr"></div>
+  <p class="code">or type the code <b id="code"></b></p>
+  <ol class="steps">
+    <li>It downloads a full copy of your pantry.</li>
+    <li>After that it catches up whenever both apps are open.</li>
+    <li>You can remove it from this list at any time.</li>
+  </ol>
+  <button class="btn ghost" data-close>Done</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="shared/pantry-core.js"></script>
+<script>
+  const P = window.Pantry;
+  const $ = (s) => document.querySelector(s);
+  const state = { tab: 'home', loc: 'all', filter: null, q: '', open: null, emoji: P.emojis[0] };
+
+  function syncPill() {
+    const s = P.sync;
+    const cls = s.syncing ? 'busy' : s.pending ? 'pending' : '';
+    const text = s.syncing ? 'Syncing…' : s.pending ? `${s.pending} to sync` : 'Synced';
+    return `<button class="pill ${cls}" data-go="sync"><i></i>${text}</button>`;
+  }
+
+  function renderHome() {
+    const s = P.stats();
+    const low = P.items.filter((i) => P.status(i) !== 'ok').sort((a, b) => a.qty / a.min - b.qty / b.min);
+    const soon = P.items.filter(P.expiring).sort((a, b) => P.daysLeft(a) - P.daysLeft(b));
+    $('#home').innerHTML = `
+      <header class="hero">
+        <div class="top"><p class="date">${P.todayLabel}</p>${syncPill()}</div>
+        <h1>My Pantry</h1>
+        <p class="sub">${P.greeting()}. ${s.attention ? `${s.attention} things could use a look.` : 'Everything is stocked.'}</p>
+      </header>
+      <div class="stats">
+        <button class="stat low" data-go="items" data-filter="low"><b>${s.low + s.out}</b><span>Running low</span></button>
+        <button class="stat soon" data-go="items" data-filter="soon"><b>${s.expiring}</b><span>Use soon</span></button>
+        <button class="stat" data-go="items" data-filter=""><b>${s.total}</b><span>Items</span></button>
+      </div>
+      <h2 class="sec">Running low <button class="link" data-go="shopping">Shopping list →</button></h2>
+      <div class="shelf">${low.map((i) => `
+        <button class="mini" data-open="${i.id}">
+          <span class="em">${i.emoji}</span>
+          <span class="nm">${P.esc(i.name)}</span>
+          <span class="tag ${P.status(i)}">${P.status(i) === 'out' ? 'Out' : P.fmtQty(i) + ' left'}</span>
+        </button>`).join('') || '<p class="sub">Nothing is running low.</p>'}</div>
+      <h2 class="sec">Use soon</h2>
+      <div class="card">${soon.map((i) => `
+        <button class="row" data-open="${i.id}">
+          <span class="em sm">${i.emoji}</span>
+          <span class="grow"><b>${P.esc(i.name)}</b><small>${P.loc(i.location).name} · ${P.fmtQty(i)}</small></span>
+          <span class="chip ${P.daysLeft(i) <= 1 ? 'out' : 'low'}">${P.shortExpiry(i)}</span>
+        </button>`).join('')}</div>
+      <h2 class="sec">Recent activity</h2>
+      <div class="card">${P.activity.slice(0, 4).map((a) => `
+        <div class="row">
+          <span class="dev ${a.who === 'Main Phone' ? '' : 'alt'}">${P.icon('phone')}</span>
+          <span class="grow"><b>${P.esc(a.text)}</b><small>${a.who} · ${a.ago}</small></span>
+        </div>`).join('')}</div>`;
+  }
+
+  function filteredItems() {
+    const q = state.q.trim().toLowerCase();
+    return P.items.filter((i) =>
+      (state.loc === 'all' || i.location === state.loc) &&
+      (!q || i.name.toLowerCase().includes(q) || i.category.toLowerCase().includes(q)) &&
+      (state.filter !== 'low' || P.status(i) !== 'ok') &&
+      (state.filter !== 'soon' || P.expiring(i)));
+  }
+
+  function card(i) {
+    const st = P.status(i);
+    const exp = P.expiring(i);
+    const tag = st !== 'ok' ? `<span class="tag ${st}">${st === 'out' ? 'Out' : 'Low'}</span>`
+      : exp ? `<span class="tag low">${P.shortExpiry(i)}</span>` : '';
+    return `
+      <div class="item ${st}" data-open="${i.id}" tabindex="0">
+        <div class="item-top"><span class="em">${i.emoji}</span>${tag}</div>
+        <b class="nm">${P.esc(i.name)}</b>
+        <small class="meta ${exp ? 'warn' : ''}">${exp ? P.expiryLabel(i) : P.loc(i.location).name + ' · ' + P.esc(i.category)}</small>
+        <div class="bar"><i style="width:${P.level(i) * 100}%"></i></div>
+        <div class="step">
+          <button data-adj="-1" data-id="${i.id}" aria-label="Use one">${P.icon('minus')}</button>
+          <span>${P.fmtQty(i)}</span>
+          <button data-adj="1" data-id="${i.id}" aria-label="Add one">${P.icon('plus')}</button>
+        </div>
+      </div>`;
+  }
+
+  function renderItems() {
+    const locChip = (id, label) => `<button data-loc="${id}" class="${state.loc === id ? 'on' : ''}">${label}</button>`;
+    $('#chips').innerHTML =
+      `<button class="warn ${state.filter === 'low' ? 'on' : ''}" data-filter-toggle="low">Running low</button>` +
+      `<button class="warn ${state.filter === 'soon' ? 'on' : ''}" data-filter-toggle="soon">Use soon</button><hr>` +
+      locChip('all', 'All') + P.locations.map((l) => locChip(l.id, `${l.icon} ${l.name}`)).join('');
+    const list = filteredItems();
+    $('#grid').innerHTML = list.map(card).join('') || '<p class="empty">Nothing matches. Try another shelf.</p>';
+  }
+
+  function shopRow(e) {
+    return `
+      <button class="row check ${e.checked ? 'done' : ''}" data-toggle="${e.key}">
+        <span class="box">${e.checked ? P.icon('check') : ''}</span>
+        <span class="em sm">${e.emoji}</span>
+        <span class="grow"><b>${P.esc(e.name)}</b><small>${P.esc(e.note || 'Extra')}</small></span>
+      </button>`;
+  }
+
+  function renderShop() {
+    const { auto, extras } = P.shoppingList();
+    const n = P.checkedCount();
+    $('#shop-list').innerHTML = `
+      <h2 class="sec">From running low <small>added automatically</small></h2>
+      <div class="card">${auto.map(shopRow).join('') || '<p class="empty">Nothing running low 🎉</p>'}</div>
+      <h2 class="sec">Extras</h2>
+      <div class="card">${extras.map(shopRow).join('') || '<p class="empty">No extras.</p>'}</div>`;
+    const btn = $('#restock');
+    btn.disabled = !n;
+    btn.textContent = n ? `Bought ${n} · restock pantry` : 'Tick items as you shop';
+    const total = auto.length + extras.length;
+    $('#shop-badge').textContent = total;
+    $('#shop-badge').hidden = !total;
+  }
+
+  function renderSync() {
+    const s = P.sync;
+    const second = P.devices[1];
+    const title = s.syncing ? 'Talking to Second Phone…' : s.pending ? `${s.pending} change${s.pending > 1 ? 's' : ''} waiting` : 'All caught up';
+    const note = s.syncing ? 'Sending changes straight to the other phone.'
+      : s.pending ? 'Second Phone will pick these up the next time both apps are open.' : `Both phones matched ${s.lastSync}.`;
+    $('#sync-body').innerHTML = `
+      <div class="card sync-hero ${s.syncing ? 'busy' : ''}">
+        <div class="phones">
+          <div class="ph main">${P.icon('phone')}<small><b>This phone</b><br>Main copy</small></div>
+          <div class="wire"><i></i><i></i><i></i></div>
+          <div class="ph">${P.icon('phone')}<small><b>Second Phone</b><br>seen ${second.lastSeen}</small></div>
+        </div>
+        <h3>${title}</h3>
+        <p>${note}</p>
+        <button class="btn" data-sync ${s.syncing ? 'disabled' : ''}>${s.syncing ? 'Syncing…' : 'Sync now'}</button>
+      </div>
+      <h2 class="sec">Phones</h2>
+      <div class="card">
+        ${P.devices.map((d) => `
+          <div class="row">
+            <span class="dev ${d.role === 'main' ? '' : 'alt'}">${P.icon('phone')}</span>
+            <span class="grow"><b>${d.name}</b><small>${d.role === 'main' ? 'This phone · keeps the master copy' : 'Last seen ' + d.lastSeen}</small></span>
+            ${d.role === 'main' ? '<span class="chip ok">Main</span>' : ''}
+          </div>`).join('')}
+        <button class="row" data-pair><span class="dev">${P.icon('qr')}</span><span class="grow"><b>Add another phone</b><small>Scan a code to pair</small></span></button>
+      </div>
+      <h2 class="sec">Backup</h2>
+      <div class="card">
+        <button class="row" data-toast="Backup file saved (sample)"><span class="dev alt">${P.icon('download')}</span><span class="grow"><b>Save a backup file</b><small>Last backup 6 days ago</small></span></button>
+        <button class="row" data-toast="Restore opens a file picker (sample)"><span class="dev alt">${P.icon('upload')}</span><span class="grow"><b>Restore from a backup</b><small>Replaces what is on this phone</small></span></button>
+      </div>
+      <p class="fine">Your pantry lives on your phones only. No account, no cloud copy.</p>`;
+  }
+
+  function renderDetail() {
+    const i = P.byId(state.open);
+    const l = P.loc(i.location);
+    const st = P.status(i);
+    $('#detail').innerHTML = `
+      <div class="sheet-hero">
+        <span class="em xl">${i.emoji}</span>
+        <div><h2>${P.esc(i.name)}</h2><p>${l.icon} ${l.name} · ${P.esc(i.category)}</p></div>
+      </div>
+      <div class="big-step">
+        <button data-adj="-1" data-id="${i.id}" aria-label="Use one">${P.icon('minus')}</button>
+        <div><b>${P.num(i.qty)}</b><span>${P.unitText(i.unit, i.qty)} left</span></div>
+        <button data-adj="1" data-id="${i.id}" aria-label="Add one">${P.icon('plus')}</button>
+      </div>
+      <dl class="facts">
+        <div><dt>Status</dt><dd><span class="chip ${st}">${st === 'ok' ? 'Stocked' : st === 'low' ? 'Running low' : 'Out'}</span></dd></div>
+        <div><dt>Warn me below</dt><dd>${P.fmtQty(i, i.min)}</dd></div>
+        <div><dt>Expiry</dt><dd>${P.expiryLabel(i) || 'No date'}</dd></div>
+        <div><dt>Last change</dt><dd>${i.changedBy}<br><small>${i.changedAgo}</small></dd></div>
+      </dl>
+      <div class="actions">
+        <button class="btn ghost" data-toast="Editing comes with the real app">Edit details</button>
+        <button class="btn" data-close>Done</button>
+      </div>`;
+  }
+
+  function render() {
+    renderHome();
+    renderItems();
+    renderShop();
+    renderSync();
+    if (state.open) renderDetail();
+    document.querySelectorAll('.sync-slot').forEach((el) => (el.innerHTML = syncPill()));
+  }
+
+  function go(tab, filter) {
+    state.tab = tab;
+    if (filter !== undefined) { state.filter = filter; state.loc = 'all'; }
+    document.querySelectorAll('.screen').forEach((s) => (s.hidden = s.id !== tab));
+    document.querySelectorAll('.nav button').forEach((b) => b.classList.toggle('active', b.dataset.go === tab));
+    $('.fab').hidden = !(tab === 'home' || tab === 'items');
+    closeSheets();
+    scrollTo(0, 0);
+    render();
+  }
+
+  function openSheet(name) {
+    document.querySelectorAll('.sheet').forEach((s) => s.classList.toggle('open', s.dataset.sheet === name));
+    $('#scrim').classList.add('open');
+  }
+  function closeSheets() {
+    document.querySelectorAll('.sheet').forEach((s) => s.classList.remove('open'));
+    $('#scrim').classList.remove('open');
+    state.open = null;
+  }
+
+  let toastTimer;
+  function toast(msg) {
+    const t = $('#toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2000);
+  }
+
+  function paintEmojis() {
+    $('#emojis').innerHTML = P.emojis.map((e) => `<button type="button" data-emoji="${e}" class="${e === state.emoji ? 'on' : ''}">${e}</button>`).join('');
+  }
+
+  document.addEventListener('click', (e) => {
+    const at = (sel) => e.target.closest(sel);
+    let x;
+    if ((x = at('[data-adj]'))) return P.adjust(+x.dataset.id, +x.dataset.adj);
+    if ((x = at('[data-go]'))) return go(x.dataset.go, 'filter' in x.dataset ? x.dataset.filter || null : undefined);
+    if ((x = at('[data-open]'))) { state.open = +x.dataset.open; renderDetail(); return openSheet('detail'); }
+    if ((x = at('[data-loc]'))) { state.loc = x.dataset.loc; return renderItems(); }
+    if ((x = at('[data-filter-toggle]'))) { const f = x.dataset.filterToggle; state.filter = state.filter === f ? null : f; return renderItems(); }
+    if ((x = at('[data-toggle]'))) return P.toggleShop(x.dataset.toggle);
+    if ((x = at('[data-emoji]'))) { state.emoji = x.dataset.emoji; return paintEmojis(); }
+    if (at('[data-sync]')) return P.syncNow();
+    if (at('[data-pair]')) return openSheet('pair');
+    if (at('[data-add]')) return openSheet('add');
+    if (at('[data-close]') || e.target.id === 'scrim') return closeSheets();
+    if (at('#restock')) { const n = P.restock(); return toast(`${n} item${n === 1 ? '' : 's'} restocked`); }
+    if ((x = at('[data-toast]'))) return toast(x.dataset.toast);
+  });
+
+  $('#q').addEventListener('input', (e) => { state.q = e.target.value; renderItems(); });
+
+  $('#extra-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const v = $('#extra').value.trim();
+    if (!v) return;
+    P.addExtra(v);
+    $('#extra').value = '';
+  });
+
+  $('#add-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const f = new FormData(e.target);
+    const exp = f.get('expiry');
+    const item = P.addItem({
+      name: f.get('name').trim(), emoji: state.emoji, location: f.get('location'),
+      qty: f.get('qty'), unit: f.get('unit'), min: f.get('min'),
+      expiry: exp ? new Date(exp + 'T00:00') : null,
+    });
+    e.target.reset();
+    state.filter = null;
+    go('items');
+    state.loc = item.location;
+    renderItems();
+    toast(`${item.name} added`);
+  });
+
+  $('#loc-select').innerHTML = P.locations.map((l) => `<option value="${l.id}">${l.icon} ${l.name}</option>`).join('');
+  $('#unit-select').innerHTML = P.units.map((u) => `<option>${u}</option>`).join('');
+  $('#qr').innerHTML = P.fakeQR();
+  $('#code').textContent = P.pairCode;
+  paintEmojis();
+  P.on(render);
+  render();
+</script>
+</body>
+</html>
