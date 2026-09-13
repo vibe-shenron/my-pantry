@@ -3,7 +3,7 @@
 A household inventory app. It's web-based (HTML), so it runs on Android and iPhone from one codebase.
 Your **main phone** holds the master copy. Other phones sync with it and catch up.
 
-**Status (2026-09-13):** the first build is done as a single file, [index.html](index.html). It installs to the home screen and opens offline. It's live as a private Claude page until GitHub hosting is set up: https://claude.ai/code/artifact/cb119456-40c9-45b7-a41b-7a9f701f7559 Phones sync by file for now. The original UI samples are in [ui-samples/](ui-samples/index.html).
+**Status (2026-09-13):** the first build is done as a single file, [index.html](index.html). It installs to the home screen and opens offline. It's live at **https://vibe-shenron.github.io/my-pantry/** (code: https://github.com/vibe-shenron/my-pantry). The earlier private Claude page is retired once your data has moved across. Phones sync by file for now. The original UI samples are in [ui-samples/](ui-samples/index.html).
 
 ### What's in the single-file build
 - Everything in v1 (§2): items, +/−, locations, search and filters, low stock, use soon, shopping list and restock, activity, recently deleted, backup and restore.
@@ -12,8 +12,8 @@ Your **main phone** holds the master copy. Other phones sync with it and catch u
 - Follows the phone's light/dark setting.
 
 ### Next: GitHub hosting (right after the first build)
-1. ✅ GitHub account created (2026-09-14). GitHub CLI installed. **Next: sign in on this computer with `gh auth login`.**
-2. ✅ The app is now `index.html`, in a local Git repository. Still to do: create the `my-pantry` repository on GitHub, push, and switch on GitHub Pages.
+1. ✅ GitHub account created (2026-09-14), signed in on this computer as `vibe-shenron`.
+2. ✅ Public repository [vibe-shenron/my-pantry](https://github.com/vibe-shenron/my-pantry), published with GitHub Pages at https://vibe-shenron.github.io/my-pantry/.
 3. ✅ Manifest, service worker and icons added. Tested locally: Chrome reports it installable, and it opens offline.
 4. Add automatic phone-to-phone sync (Option A, PeerJS).
 5. **Moving your data:** in the current version, go to Sync → *Save a backup file*. In the GitHub version, choose *Join from another phone* and open that file. Everything comes across.
@@ -26,7 +26,7 @@ Your **main phone** holds the master copy. Other phones sync with it and catch u
 | Phones | Both are **Android** today, but the app must also work on **iPhone** (either can be main or second) |
 | Sync | Option A (direct phone-to-phone), because it's the only option that works for every Android/iPhone combination (§4.3) |
 | Barcode scanning | **Deferred.** Stays in v3, to revisit later |
-| Hosting | GitHub Pages, **deferred until after the first build**. Needs a free GitHub account (§5). Until then: a single file, published as a private Claude page |
+| Hosting | GitHub Pages from a **public** repository, `vibe-shenron/my-pantry` (2026-09-14) |
 
 ---
 
