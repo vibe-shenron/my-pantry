@@ -152,3 +152,78 @@ function reportSync(r, quiet) {
   if (r && r.added) snack(`Synced · ${r.added} change${r.added === 1 ? '' : 's'}${r.from.length ? ' from ' + r.from.join(', ') : ''}`);
   else if (!quiet) snack(r ? 'Everything is up to date' : navigator.onLine ? 'Couldn’t sync right now' : 'You’re offline. It will sync when you’re back online.');
 }
+
+/* ---------- join links: one tap on another phone joins the pantry with sync already on ---------- */
+const b64url = (str) => b64(new TextEncoder().encode(str)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+function unb64url(s) {
+  s = s.replace(/-/g, '+').replace(/_/g, '/');
+  while (s.length % 4) s += '=';
+  return new TextDecoder().decode(unb64(s));
+}
+// The settings travel in the #fragment, which browsers never send to any server.
+function joinLink() {
+  const as = meta.as;
+  return `${location.origin}${location.pathname}#join=${b64url(JSON.stringify({ v: 1, gist: as.gist, token: as.token, key: as.key }))}`;
+}
+// Accepts a whole link, or text containing one. Returns the sync settings, or null.
+function parseJoin(text) {
+  const m = String(text || '').match(/#join=([A-Za-z0-9_-]+)/);
+  if (!m) return null;
+  try {
+    const c = JSON.parse(unb64url(m[1]));
+    return c && typeof c.gist === 'string' && typeof c.token === 'string' && typeof c.key === 'string' ? c : null;
+  } catch (e) { return null; }
+}
+async function shareJoinLink() {
+  const url = joinLink();
+  if (navigator.share) {
+    try { await navigator.share({ title: 'My Pantry', text: 'Open this on your other phone to join my pantry:', url }); return 'shared'; } catch (e) {
+      if (e && e.name === 'AbortError') return 'cancelled';
+    }
+  }
+  try { await navigator.clipboard.writeText(url); return 'copied'; } catch (e) {
+    openSheet('copy', { text: url, kind: 'link' });
+    return 'shown';
+  }
+}
+// Join this phone to the pantry in the sync gist (or reconnect it), straight from the gist.
+async function joinFromGist(cfg, phoneName) {
+  if (!navigator.onLine) return { ok: false, msg: 'Connect to the internet, then open the link again.' };
+  let res;
+  try { res = await gh('GET', '/gists/' + cfg.gist, cfg.token); } catch (e) { return { ok: false, msg: 'Couldn’t reach GitHub. Check your connection and open the link again.' }; }
+  if (res.status === 401) return { ok: false, msg: 'The GitHub key in that link no longer works. Make a new link on your main phone.' };
+  if (res.status === 404) return { ok: false, msg: 'The pantry that link points to can’t be found.' };
+  if (!res.ok) return { ok: false, msg: 'GitHub couldn’t answer right now. Open the link again in a minute.' };
+  const g = await res.json();
+  let pantryId = null;
+  const events = [];
+  for (const [name, f] of Object.entries(g.files || {})) {
+    if (!/^phone-.+\.json$/.test(name)) continue;
+    try {
+      const text = f.truncated ? await (await fetch(f.raw_url, { cache: 'no-store' })).text() : f.content;
+      const p = await unseal(text, cfg.key);
+      if (!Array.isArray(p.events)) continue;
+      if (!pantryId) pantryId = p.pantryId;
+      if (p.pantryId === pantryId) events.push(...p.events);
+    } catch (e) { console.warn('My Pantry: skipped a sync file', name, e); }
+  }
+  if (!pantryId) return { ok: false, msg: 'That link’s pantry is empty or can’t be unlocked. Make a new link on your main phone.' };
+  if (S.pantryId && S.pantryId !== pantryId) return { ok: false, msg: 'This phone already has a different pantry. Erase it in Sync & settings first, then open the link again.' };
+  const joining = !S.pantryId;
+  const added = merge(events);
+  if (!S.pantryId) return { ok: false, msg: 'That link’s pantry couldn’t be read.' };
+  meta.as = { on: true, gist: cfg.gist, token: cfg.token, key: cfg.key, pushedLen: -1, last: Date.now(), err: null };
+  meta.asPrompted = true;
+  if (joining) {
+    const taken = new Set(Object.values(S.devices).map((d) => d.name));
+    let nm = phoneName || 'Second Phone';
+    for (let k = 3; taken.has(nm); k++) nm = `Phone ${k}`;
+    emit('device.name', { name: nm });
+    askPersist();
+  }
+  commit();
+  return {
+    ok: true, joining, added,
+    msg: joining ? `Joined · ${items().length} items · automatic sync is on` : added ? `Synced · ${added} changes · automatic sync is on` : 'Automatic sync is on',
+  };
+}

@@ -1,7 +1,7 @@
 // My Pantry service worker: opens instantly from the saved copy, works offline,
 // and refreshes the saved copy in the background.
 // Bump VERSION on every release: phones then install the new version and offer a reload.
-const VERSION = 'v5';
+const VERSION = 'v6';
 const CACHE = 'my-pantry-' + VERSION;
 const FILES = [
   './',

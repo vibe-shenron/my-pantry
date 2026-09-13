@@ -21,7 +21,8 @@ Open the app's web address in Chrome (Android) or Safari (iPhone), then add it t
 
 - **Updates:** at launch the app checks for a new version under the logo ("Checking for updates…"). If it finds one, it downloads it and restarts into it. When you're offline it just opens.
 - **Automatic sync:** switch it on under *Sync & settings → Automatic sync* (once, on the main phone). Your phones swap changes through a secret gist on your GitHub account. Each phone keeps one file there with its history, compressed and encrypted on the phone (AES-256), so GitHub only holds scrambled data. The phones sync at launch ("Syncing your pantry…"), when you come back to the app, every 90 seconds while it's open, and a few seconds after each change.
-- **Setting it up:** the app opens GitHub's token page with only the `gist` permission ticked. Paste the key in, then send one sync file to your other phone. That file carries the sync settings, so only send it to your own phone. Backup files never include them.
+- **On by default:** a new pantry goes straight to the key step, and an existing one asks once and keeps a reminder card until sync is connected. GitHub doesn't let apps create keys, and a key can't be built into the app (the code is public), so you paste one once, on the main phone only. The app opens GitHub's token page with only `gist` ticked.
+- **Other phones:** they never need GitHub. *Add your other phone* sends a join link; opening it on the other phone joins the pantry with sync on in one tap. The settings travel in the link's `#fragment`, which is never sent to a server. Sync files and backups also carry the settings, so a restored phone syncs straight away. Keep links, sync files and backups to your own phones.
 
 ## Syncing two phones
 

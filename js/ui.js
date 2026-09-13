@@ -5,7 +5,7 @@
    redrawing it, so numbers roll, bars glide and rows slide in and out.
    ===================================================================== */
 
-const APP_VERSION = '2.3';
+const APP_VERSION = '2.4';
 const ui = { tab: 'inventory', loc: 'all', filter: null, q: '', sheet: null, form: null, examples: true, joinName: '', scroll: {} };
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -254,6 +254,9 @@ function renderBanners() {
   const entries = [];
   if (Store.mode === 'memory' || Store.failed) {
     entries.push({ key: 'nosave', html: banner('bad', 'alert', 'This phone isn’t saving My Pantry', 'Changes will be lost when you close it. Open it in Chrome, not a private tab.') });
+  }
+  if (typeof asOn === 'function' && !asOn() && !ui.asLater) {
+    entries.push({ key: 'autosync', html: banner('info', 'sync', 'Finish setting up automatic sync', 'Add your GitHub key once. Then your phones stay in step by themselves.', '<button class="text-btn press" data-act="as-setup">Set up</button>') });
   }
   if (typeof installOffer === 'function' && installOffer()) {
     entries.push({ key: 'install', html: banner('info', 'install', 'Install My Pantry', 'Put it on your home screen. It opens full screen and works offline.',

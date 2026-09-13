@@ -32,6 +32,7 @@ Your feedback on v1 was that it felt basic and too much like a website: plain lo
   - Sync runs at launch, when the app comes back to the front, every 90 seconds while it's open, when the phone comes back online, and 2.5 seconds after a change.
   - Setup needs a classic GitHub token limited to **gist**. The sync file carries the gist ID, the token and the key to the other phone. Backups don't carry them.
   - Sync by file stays available as a fallback.
+- **2.4: sync on by default** (you asked for this on 2026-09-14). A new pantry goes straight to the key step. An existing pantry asks once at launch and keeps a reminder card until sync is connected. Other phones join through a **join link**, which carries the settings in its `#fragment` and joins with sync on in one tap. Backups now carry the settings too. The one step that can't be removed is creating the GitHub key: GitHub has no way for apps to create keys, and a key in the public code would be revoked and could be misused.
 
 ### Next: GitHub hosting (right after the first build)
 1. ✅ GitHub account created (2026-09-14), signed in on this computer as `vibe-shenron`.

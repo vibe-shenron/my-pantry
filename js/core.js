@@ -578,8 +578,8 @@ function exportText(kind) {
     app: APP, format: FORMAT, pantryId: S.pantryId, pantryName: S.name,
     from: { dev: meta.deviceId, name: myName() }, exportedAt: Date.now(), events: log,
   };
-  // A sync file (not a backup) carries the automatic-sync settings, so the other phone can switch it on.
-  if (kind === 'sync' && meta.as && meta.as.on) data.autosync = { gist: meta.as.gist, token: meta.as.token, key: meta.as.key };
+  // Sync files and backups carry the automatic-sync settings, so a joining or restored phone syncs straight away.
+  if (meta.as && meta.as.on) data.autosync = { gist: meta.as.gist, token: meta.as.token, key: meta.as.key };
   return JSON.stringify(data);
 }
 const fileName = (kind) => `my-pantry-${kind}-${slug(myName())}-${dateStr(new Date())}.json`;

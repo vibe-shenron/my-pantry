@@ -242,9 +242,9 @@ function sheetReceive() {
     <div class="stack">
       <button class="btn primary press" data-act="pick-file">${icon('download')}Choose the file</button>
       <p class="hint">${joining
-        ? 'On your main phone, open Sync and tap <b>Send</b>. Send the file to this phone (WhatsApp, Quick Share or email), then choose it here.'
+        ? 'Easiest: on your main phone open <b>Sync & settings → Automatic sync → Add your other phone</b>, and open that link on this phone. Or send a sync file and choose it here.'
         : 'The .json file from your other phone, or a backup. Nothing on this phone is deleted. Only changes it doesn’t have are added.'}</p>
-      <div class="field"><label for="paste-in">Or paste the text</label><textarea class="input code" id="paste-in" placeholder="Paste copied My Pantry text here" spellcheck="false"></textarea></div>
+      <div class="field"><label for="paste-in">Or paste a join link or copied text</label><textarea class="input code" id="paste-in" placeholder="Paste copied My Pantry text here" spellcheck="false"></textarea></div>
       <button class="btn tonal press" data-act="paste-load">Load pasted text</button>
     </div>`;
 }
@@ -252,9 +252,9 @@ function sheetReceive() {
 function sheetCopy(arg) {
   return sheetHead('Copy instead') + `
     <div class="stack">
-      <p class="hint">Files can’t be saved here, so copy this text instead. ${arg.kind === 'sync'
+      <p class="hint">${arg.kind === 'link' ? 'Copy this link, send it to your other phone and open it there.' : `Files can’t be saved here, so copy this text instead. ${arg.kind === 'sync'
         ? 'Paste it into a message to your other phone. There, open Sync → Receive and paste it.'
-        : 'Paste it into a note or a message to yourself, and keep it safe.'}</p>
+        : 'Paste it into a note or a message to yourself, and keep it safe.'}`}</p>
       <textarea class="input code" id="copy-out" readonly spellcheck="false">${esc(arg.text)}</textarea>
       <button class="btn primary press" data-act="copy-text">Copy text</button>
     </div>`;
@@ -262,9 +262,9 @@ function sheetCopy(arg) {
 
 /* ---------- automatic sync ---------- */
 function sheetAutosyncSetup() {
-  return sheetHead('Automatic sync') + `
+  return sheetHead('Turn on automatic sync') + `
     <div class="stack">
-      <p class="hint">Your phones swap changes through a private file on your GitHub account. Everything is locked (encrypted) on the phone first, so GitHub only ever holds scrambled data. You set this up once, on this phone.</p>
+      <p class="hint">Automatic sync is on by default. It needs your GitHub key once, on this phone only (about two minutes). Your other phones never need it: they join with a link. Everything is locked (encrypted) on the phone first, so GitHub only ever holds scrambled data.</p>
       <div class="panel">
         <div class="panel-h">${icon('sparkle')}Step 1 · Make a key on GitHub</div>
         <ol class="steps">
@@ -282,6 +282,7 @@ function sheetAutosyncSetup() {
         <p class="hint" id="as-msg" role="alert"></p>
       </div>
       <p class="hint">This key can only create and change gists on your account. It can’t reach your code, repositories or anything else.</p>
+      <button class="btn plain press" data-act="as-later">Later</button>
     </div>`;
 }
 function sheetAutosync() {
@@ -294,9 +295,13 @@ function sheetAutosync() {
     <div class="card profile"><span class="lead ${bad ? 'bad' : 'brand'}">${icon('sync')}</span><span class="lt"><b>${bad ? 'Needs attention' : 'On'}</b><small>${esc(state)}</small></span></div>
     <div class="dock-inline"><button class="btn primary press" data-act="as-now">${icon('sync')}Sync now</button></div>
     <div class="sec-label"><span>Your other phone</span></div>
-    <div class="card"><button class="list-row press" data-act="as-add-phone"><span class="lead brand">${icon('share')}</span>
-      <span class="lt"><b>${otherDevices().length ? 'Switch it on for your other phone' : 'Add your other phone'}</b><small>Send one sync file and open it there with Receive. No more files after that.</small></span>${CHEV()}</button></div>
-    <p class="foot">That file carries your sync key, so only send it to your own phone.</p>
+    <div class="card">
+      <button class="list-row press" data-act="as-link"><span class="lead brand">${icon('share')}</span>
+        <span class="lt"><b>${otherDevices().length ? 'Send a join link again' : 'Add your other phone'}</b><small>Send a link and open it on the other phone. It joins with sync on, in one tap.</small></span>${CHEV()}</button>
+      <button class="list-row press" data-act="as-add-phone"><span class="lead">${icon('upload')}</span>
+        <span class="lt"><b>Send a sync file instead</b><small>Open it on the other phone with Receive</small></span>${CHEV()}</button>
+    </div>
+    <p class="foot">The link, sync files and backups carry your sync key, so keep them to your own phones.</p>
     <div class="sec-label"><span>When it syncs</span></div>
     <div class="card"><div class="list-row"><span class="lt"><b>At launch, when you come back to the app, and a few seconds after each change</b><small>It needs internet. Changes made offline go up the next time you’re online.</small></span></div></div>
     <div class="card" style="margin-top:14px"><button class="list-row danger press" data-act="as-off"><span class="lead bad">${icon('x')}</span><span class="lt"><b>Turn off on this phone</b><small>Your pantry stays on this phone.</small></span></button></div>`;

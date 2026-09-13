@@ -199,6 +199,15 @@ async function sendFile(kind) {
 }
 function handleImport(text) {
   if (!String(text || '').trim()) { snack('Paste the text first'); return; }
+  const cfg = parseJoin(text);
+  if (cfg) {
+    snack('Joining…');
+    joinFromGist(cfg, ui.joinName).then((r) => {
+      if (r.ok) { closeSheet(); if (ui.tab !== 'inventory') goTab('inventory'); render(); buzz([10, 40, 10]); }
+      snack(r.msg);
+    });
+    return;
+  }
   const res = importText(text, ui.joinName);
   if (res.ok) { closeSheet(); if (ui.tab !== 'inventory') goTab('inventory'); render(); buzz([10, 40, 10]); }
   snack(res.msg);
@@ -209,7 +218,7 @@ async function copyText(kind) {
   try { await navigator.clipboard.writeText(ta.value); ok = true; } catch (e) {
     try { ta.focus(); ta.select(); ok = document.execCommand('copy'); } catch (e2) { ok = false; }
   }
-  if (ok) { markSent(kind); snack('Copied'); } else { ta.focus(); ta.select(); snack('Press and hold the text, then tap Copy'); }
+  if (ok) { if (kind === 'sync' || kind === 'backup') markSent(kind); snack('Copied'); } else { ta.focus(); ta.select(); snack('Press and hold the text, then tap Copy'); }
 }
 
 const blankish = (v) => (v == null || v === '' ? null : v);
@@ -291,6 +300,9 @@ async function onAction(act, el) {
     case 'start':
       createPantry($('#w-name').value.trim() || 'Main Phone', ui.examples, $('#w-cur').value || guessCurrency());
       buzz([10, 40, 16]);
+      meta.asPrompted = true;
+      persist();
+      setTimeout(() => openSheet('autosync-setup'), 650);
       return snack('Your pantry is ready');
     case 'join':
       ui.joinName = $('#w-name').value.trim() || 'Second Phone';
@@ -429,6 +441,13 @@ async function onAction(act, el) {
       return;
     }
     case 'as-setup': return openSheet('autosync-setup');
+    case 'as-later': ui.asLater = true; closeSheet(); render(); return snack('You can turn it on any time in Sync & settings');
+    case 'as-link': {
+      const r = await shareJoinLink();
+      if (r === 'copied') snack('Join link copied. Send it to your other phone and open it there.');
+      else if (r === 'shared') snack('Open the link on your other phone. It joins with sync on.');
+      return;
+    }
     case 'as-open': return openSheet('autosync');
     case 'as-connect': {
       const b = $('#as-connect');
@@ -636,7 +655,9 @@ async function backgroundUpdateCheck() {
 async function boot() {
   $$('[data-icon]').forEach((el) => { el.outerHTML = icon(el.dataset.icon, el.className); });
   const params = new URLSearchParams(location.search);
-  if (params.toString()) history.replaceState(null, '', location.pathname);
+  // A join link carries the sync settings in its #fragment. Keep them through a possible update restart.
+  if (location.hash.startsWith('#join=')) session('mp-join', location.hash);
+  if (params.toString() || location.hash) history.replaceState(null, '', location.pathname);
   else if (history.state && history.state.myPantry) { Nav.ignore++; history.go(-history.state.myPantry); }
   await Store.open();
   const saved = await Store.get('data');
@@ -653,8 +674,19 @@ async function boot() {
   bootMsg('');
   const justUpdated = !!session('mp-updated');
   session('mp-updated', null);
+  let joinResult = null;
+  const joinRaw = session('mp-join');
+  if (joinRaw) {
+    session('mp-join', null);
+    const cfg = parseJoin(joinRaw);
+    if (cfg) {
+      bootMsg('Joining your pantry…');
+      joinResult = await joinFromGist(cfg).catch(() => ({ ok: false, msg: 'Couldn’t join from that link. Try opening it again.' }));
+      bootMsg('');
+    }
+  }
   let launchSync = null;
-  if (asOn() && navigator.onLine) {
+  if (!joinResult && asOn() && navigator.onLine) {
     bootMsg('Syncing your pantry…');
     launchSync = await withTimeout(autoSync(), 8000).catch(() => null);
     bootMsg('');
@@ -669,9 +701,16 @@ async function boot() {
   }
   render();
   onScroll();
-  if (currencyFixed) snack('Prices now show in Pakistani rupees (Rs)');
+  if (joinResult) snack(joinResult.msg);
+  else if (currencyFixed) snack('Prices now show in Pakistani rupees (Rs)');
   else if (launchSync && launchSync.added) reportSync(launchSync, true);
   else if (justUpdated) snack(`Updated to My Pantry ${APP_VERSION}`);
+  // Automatic sync is on by default: until it's connected, bring up the setup once per install.
+  if (S.pantryId && !asOn() && !meta.asPrompted) {
+    meta.asPrompted = true;
+    persist();
+    setTimeout(() => { if (!ui.sheet) openSheet('autosync-setup'); }, 900);
+  }
   setTimeout(() => $('#boot').classList.add('gone'), 260);
   if (S.pantryId) {
     const tab = params.get('tab');
