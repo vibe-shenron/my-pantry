@@ -401,3 +401,5 @@ textarea.code { font: 12px/1.45 ui-monospace, "SF Mono", Menlo, Consolas, monosp
 .seg button { text-align: center; }
 .swipe-under { visibility: hidden; }
 .item.swiping .swipe-under { visibility: visible; }
+/* The logo's own corners are rounded at about a quarter of its width: match them wherever it is shown. */
+.boot img, .w-hero img { border-radius: 26%; }

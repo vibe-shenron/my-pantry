@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <!-- My Pantry app icon: a storage jar on the app's green. Source for the PNG icons. -->
-  <rect id="bg" width="512" height="512" rx="112" fill="#0A8F63"/>
-  <rect x="176" y="112" width="160" height="44" rx="14" fill="#FFFFFF"/>
-  <path d="M168 172h176c13 0 24 11 24 24v172c0 22-18 40-40 40H184c-22 0-40-18-40-40V196c0-13 11-24 24-24z" fill="#FFFFFF"/>
-  <rect x="144" y="236" width="224" height="92" fill="#D5F0E5"/>
-  <path d="M192 270h128M192 298h88" stroke="#0A8F63" stroke-width="16" stroke-linecap="round" fill="none"/>
-</svg>
