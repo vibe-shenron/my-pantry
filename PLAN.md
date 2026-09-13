@@ -11,6 +11,20 @@ Your **main phone** holds the master copy. Other phones sync with it and catch u
 - Example items you can remove with one tap; a first-launch choice between *Start a new pantry* and *Join from another phone*; "Make this the main phone".
 - Follows the phone's light/dark setting.
 
+### Version 2 (2026-09-14): feels like an installed app, plus pricing
+Your feedback on v1 was that it felt basic and too much like a website: plain look, colours that didn't go together, no animation. v2 changes:
+- **Look:** a "basil & tomato" palette (basil green with tomato red as its complement, honey for low stock, and a soft tint per location). Figtree for text and Bricolage Grotesque for headings and numbers, both stored in the app. Summary cards replace the plain header.
+- **Motion:** screens slide in, numbers roll when they change, stock bars glide, rows slide in and out, panels spring up and can be dragged down to close, and ticks draw themselves. The title shrinks into the top bar as you scroll, and the Add button shrinks too. Taps show a ripple and give a short vibration.
+- **App behaviour:** Android's back button closes panels and returns to the Pantry tab instead of leaving the app. There's no pull-to-refresh, no zoom, and no accidental text selection or long-press menus. It has a launch screen, shortcuts when you long-press the icon (Add item, Shopping list), an install card, an "Updated, tap to reload" message, and an Automatic/Light/Dark setting.
+- **Gestures and Undo:** swipe a row left to delete it. Deleting, restocking, removing examples and removing locations can all be undone.
+- **Pricing:** a price per kg, 100 g, gram, litre, 100 ml, ml, piece, dozen, pack, can, tin, bottle, jar, bag, box, roll or tube, plus an optional pack size ("each tin holds 400 g"). From these the app shows:
+  - the value of your stock, in total, per location and per item
+  - the estimated shopping total, and the cost of what's ticked
+  - a comparable price per kg or litre
+  - price history, with the percentage change
+  - what you've spent restocking this month
+- **Code layout:** split into `css/` and `js/` files (see README).
+
 ### Next: GitHub hosting (right after the first build)
 1. ✅ GitHub account created (2026-09-14), signed in on this computer as `vibe-shenron`.
 2. ✅ Public repository [vibe-shenron/my-pantry](https://github.com/vibe-shenron/my-pantry), published with GitHub Pages at https://vibe-shenron.github.io/my-pantry/.
