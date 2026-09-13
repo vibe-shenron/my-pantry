@@ -41,9 +41,20 @@ const REGION_CUR = {
 };
 // Rough conversion so example prices look sensible in any currency.
 const EXAMPLE_RATE = { GBP: 1, USD: 1.3, EUR: 1.2, PKR: 360, INR: 110, AED: 4.8, SAR: 4.9, QAR: 4.7, KWD: 0.4, BDT: 155, CAD: 1.8, AUD: 2, NZD: 2.2, NGN: 2000, ZAR: 24, TRY: 44, MYR: 6, SGD: 1.75, JPY: 190, CNY: 9.4 };
+// The phone's time zone says where it is far more reliably than its language (often US English).
+const TZ_CUR = {
+  'Asia/Karachi': 'PKR', 'Asia/Kolkata': 'INR', 'Asia/Calcutta': 'INR', 'Asia/Dhaka': 'BDT', 'Asia/Dubai': 'AED',
+  'Asia/Riyadh': 'SAR', 'Asia/Qatar': 'QAR', 'Asia/Kuwait': 'KWD', 'Europe/London': 'GBP', 'Europe/Dublin': 'EUR',
+  'Africa/Lagos': 'NGN', 'Africa/Johannesburg': 'ZAR', 'Europe/Istanbul': 'TRY', 'Asia/Kuala_Lumpur': 'MYR',
+  'Asia/Singapore': 'SGD', 'Asia/Tokyo': 'JPY', 'Asia/Shanghai': 'CNY', 'Australia/Sydney': 'AUD', 'Australia/Melbourne': 'AUD',
+  'Pacific/Auckland': 'NZD', 'America/Toronto': 'CAD', 'America/Vancouver': 'CAD',
+};
 function guessCurrency() {
-  try { return REGION_CUR[new Intl.Locale(navigator.language || 'en-GB').maximize().region] || 'GBP'; } catch (e) { return 'GBP'; }
+  try { const tz = Intl.DateTimeFormat().resolvedOptions().timeZone; if (TZ_CUR[tz]) return TZ_CUR[tz]; } catch (e) { /* ignore */ }
+  try { return REGION_CUR[new Intl.Locale(navigator.language || 'en-PK').maximize().region] || 'PKR'; } catch (e) { return 'PKR'; }
 }
+// Currencies where everyday prices don't use cents/paisa: whole numbers from 100 up ("Rs 1,250").
+const NO_CENTS = ['PKR', 'INR', 'BDT', 'NGN', 'JPY'];
 
 // Checked in order, so specific words come before words they contain ("toilet" before "oil").
 const GUESS = [
@@ -398,16 +409,19 @@ const moneyFmt = {};
 function money(v, precise) {
   if (v == null || !isFinite(v)) return '';
   const cur = currency();
-  const key = cur + (precise ? ':p' : '');
+  const whole = !precise && NO_CENTS.includes(cur) && Math.abs(v) >= 100;
+  const key = cur + (precise ? ':p' : whole ? ':w' : '');
   if (!moneyFmt[key]) {
-    try {
+    const make = (display) => {
       const dig = new Intl.NumberFormat(undefined, { style: 'currency', currency: cur }).resolvedOptions().maximumFractionDigits;
-      moneyFmt[key] = new Intl.NumberFormat(undefined, {
-        style: 'currency', currency: cur,
-        minimumFractionDigits: precise ? Math.min(dig, 2) : dig, maximumFractionDigits: precise ? Math.max(dig, 3) : dig,
+      return new Intl.NumberFormat(undefined, {
+        style: 'currency', currency: cur, currencyDisplay: display,
+        minimumFractionDigits: whole ? 0 : precise ? Math.min(dig, 2) : dig,
+        maximumFractionDigits: whole ? 0 : precise ? Math.max(dig, 3) : dig,
       });
-    } catch (e) {
-      moneyFmt[key] = { format: (x) => `${cur} ${x.toFixed(2)}` };
+    };
+    try { moneyFmt[key] = make('narrowSymbol'); } catch (e) {
+      try { moneyFmt[key] = make('symbol'); } catch (e2) { moneyFmt[key] = { format: (x) => `${cur} ${x.toFixed(2)}` }; }
     }
   }
   return moneyFmt[key].format(v);

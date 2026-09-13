@@ -568,8 +568,17 @@ async function boot() {
     meta = newMeta();
   }
   applyTheme();
+  // Before 2.1 the currency was guessed from the phone's language, which picked USD or GBP for phones in
+  // Pakistan set to English. Correct that once; after this, whatever is chosen in settings stays.
+  let currencyFixed = false;
+  if (S.pantryId && !meta.currencyChecked) {
+    meta.currencyChecked = true;
+    if (guessCurrency() === 'PKR' && currency() !== 'PKR') { emit('pantry.set', { currency: 'PKR' }); currencyFixed = true; }
+    persist();
+  }
   render();
   onScroll();
+  if (currencyFixed) snack('Prices now show in Pakistani rupees (Rs)');
   setTimeout(() => $('#boot').classList.add('gone'), 260);
   if (S.pantryId) {
     const tab = params.get('tab');

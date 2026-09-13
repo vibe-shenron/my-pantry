@@ -5,7 +5,7 @@
    redrawing it, so numbers roll, bars glide and rows slide in and out.
    ===================================================================== */
 
-const APP_VERSION = '2.0';
+const APP_VERSION = '2.1';
 const ui = { tab: 'inventory', loc: 'all', filter: null, q: '', sheet: null, form: null, examples: true, joinName: '', scroll: {} };
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
